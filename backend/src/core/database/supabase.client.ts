@@ -1,35 +1,51 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-import { ENV } from '../../string-const';
+@Injectable()
+export class SupabaseService {
+  private readonly client: SupabaseClient;
 
-/**
- * Returns a Supabase client.
- *
- * • When `accessToken` is provided the client adds `Authorization: Bearer <token>` to all outgoing requests.
- * • For login / signup flows pass **no token** so Supabase JS can return a fresh session.
- */
-export const getSupabaseClient = (accessToken?: string): SupabaseClient => {
-  const supabaseUrl = process.env[ENV.SUPABASE_URL];
-  const supabaseAnon = process.env[ENV.SUPABASE_ANON_KEY];
+  constructor(private readonly configService: ConfigService) {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const serviceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
 
-  if (!supabaseUrl || !supabaseAnon) {
-    throw new Error('Missing Supabase environment variables');
-  }
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
 
-  const options: Parameters<typeof createClient>[2] = {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  };
-
-  if (accessToken) {
-    options.global = {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+    this.client = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
       },
-    } as any;
+    });
   }
 
-  return createClient(supabaseUrl, supabaseAnon, options);
-}; 
+  /**
+   * Returns the base Supabase client that uses the service role key.
+   */
+  getClient(): SupabaseClient {
+    return this.client;
+  }
+
+  /**
+   * Returns a Supabase client scoped to a user's access token so that Row-Level
+   * Security (RLS) policies apply correctly.
+   */
+  getUserClient(accessToken: string): SupabaseClient {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+
+    return createClient(supabaseUrl!, accessToken, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    });
+  }
+} 
