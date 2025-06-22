@@ -17,7 +17,7 @@ node_modules/
 **/*.env
 
 # Personal development folder
-development/
+**/development/
 
 # Logs
 logs/

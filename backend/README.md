@@ -40,8 +40,7 @@ $ npm run test:cov
 
 ## API Documentation
 
-Once the application is running, you can access the API documentation at:
-- Development: `http://localhost:3000/api`
+After starting the server, access Swagger UI at: [http://localhost:3000/api](http://localhost:3000/api)
 
 ## Environment Variables
 
