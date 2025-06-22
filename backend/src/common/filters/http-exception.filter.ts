@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { MESSAGES } from '../../string-const';
+import { MESSAGES } from '../helpers/string-const';
 
 /**
  * Global HTTP Exception Filter

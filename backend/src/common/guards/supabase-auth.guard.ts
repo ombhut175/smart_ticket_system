@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { SupabaseService } from '../../core/database/supabase.client';
-import { MESSAGES, COOKIES } from '../../string-const';
+import { MESSAGES, COOKIES, TABLES, TABLE_COLUMNS, QUERY_SELECTORS } from '../helpers/string-const';
 import { CookieHelper } from '../helpers/cookie.helper';
 
 /**
@@ -59,12 +59,43 @@ export class SupabaseAuthGuard implements CanActivate {
     }
 
     /**
-     * Attach user to request object:
-     * - Makes user data available to controllers and services
-     * - Includes user ID, email, metadata, and role information
-     * - Used by role guards and business logic for authorization
+     * Fetch complete user profile from public.users table:
+     * - Gets custom role (user/moderator/admin) instead of auth role (authenticated)
+     * - Includes user profile information and active status
+     * - Required for proper role-based access control
      */
-    (request as any).user = data.user;
+    const { data: userProfile, error: profileError } = await this.supabase
+      .getClient()
+      .from(TABLES.USERS)
+      .select(QUERY_SELECTORS.ALL_FIELDS)
+      .eq(TABLE_COLUMNS.ID, data.user.id)
+      .single();
+
+    if (profileError || !userProfile) {
+      throw new UnauthorizedException(MESSAGES.USER_PROFILE_NOT_FOUND);
+    }
+
+    /**
+     * Check if user account is active:
+     * - Prevents access for suspended/deactivated accounts
+     * - Admin can toggle user active status via /users/:id/active endpoint
+     */
+    if (!userProfile[TABLE_COLUMNS.IS_ACTIVE]) {
+      throw new UnauthorizedException(MESSAGES.USER_ACCOUNT_DEACTIVATED);
+    }
+
+    /**
+     * Attach enhanced user object to request:
+     * - Combines Supabase Auth user with public.users profile
+     * - Makes complete user data available to controllers and guards
+     * - Includes custom role for proper authorization checks
+     */
+    (request as any).user = {
+      ...data.user,
+      ...userProfile,
+      // Ensure we use the role from public.users table, not auth.users
+      [TABLE_COLUMNS.ROLE]: userProfile[TABLE_COLUMNS.ROLE],
+    };
     
     return true;
   }

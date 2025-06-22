@@ -14,6 +14,27 @@ export enum TABLES {
   TICKET_SKILLS = 'ticket_skills',
 }
 
+export enum TABLE_COLUMNS {
+  // Users table columns
+  ID = 'id',
+  EMAIL = 'email',
+  ROLE = 'role',
+  FIRST_NAME = 'first_name',
+  LAST_NAME = 'last_name',
+  IS_ACTIVE = 'is_active',
+  LAST_LOGIN_AT = 'last_login_at',
+  
+  // User skills table columns
+  USER_ID = 'user_id',
+  SKILL_NAME = 'skill_name',
+  PROFICIENCY_LEVEL = 'proficiency_level',
+}
+
+export enum QUERY_SELECTORS {
+  ALL_FIELDS = '*',
+  USERS_WITH_SKILLS = '*, user_skills(*)',
+}
+
 export enum MESSAGES {
   // Auth Messages
   USER_SIGNED_UP_SUCCESS = 'User signed up successfully',
@@ -32,6 +53,13 @@ export enum MESSAGES {
   FORBIDDEN = 'Forbidden access',
   BAD_REQUEST = 'Bad request',
   INTERNAL_SERVER_ERROR = 'Internal server error',
+  
+  // User Management Messages
+  USER_NOT_FOUND_BY_EMAIL = 'User with email {email} not found',
+  USER_ALREADY_MODERATOR = 'User {email} is already a moderator',
+  CANNOT_DEMOTE_ADMIN = 'Cannot change admin user {email} to moderator',
+  USER_PROFILE_NOT_FOUND = 'User profile not found',
+  USER_ACCOUNT_DEACTIVATED = 'User account is deactivated',
 }
 
 export enum COOKIES {
@@ -66,7 +94,9 @@ export enum SKILL_IMPORTANCE {
 export enum TICKET_STATUS {
   TODO = 'todo',
   IN_PROGRESS = 'in_progress',
-  DONE = 'done',
+  WAITING_FOR_CUSTOMER = 'waiting_for_customer',
+  RESOLVED = 'resolved',
+  CLOSED = 'closed',
   CANCELLED = 'cancelled',
 }
 
@@ -89,4 +119,16 @@ export enum SWAGGER_TAGS {
   USERS = 'Users',
   TICKETS = 'Tickets',
   SKILLS = 'Skills',
+}
+
+export type UserRole = `${USER_ROLES}`;
+
+/**
+ * Helper function to interpolate variables in message templates
+ * @param template - Message template with {variable} placeholders
+ * @param variables - Object with key-value pairs to replace in template
+ * @returns Interpolated message string
+ */
+export function interpolateMessage(template: string, variables: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key) => variables[key] || match);
 } 

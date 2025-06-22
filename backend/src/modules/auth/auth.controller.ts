@@ -4,7 +4,7 @@ import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
-import { SWAGGER_TAGS, MESSAGES, API_PATHS } from '../../string-const';
+import { SWAGGER_TAGS, MESSAGES, API_PATHS } from '../../common/helpers/string-const';
 import { ApiResponseHelper } from '../../common/helpers/api-response.helper';
 import { CookieHelper } from '../../common/helpers/cookie.helper';
 

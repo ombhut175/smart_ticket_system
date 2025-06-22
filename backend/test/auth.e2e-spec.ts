@@ -3,7 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
-import { MESSAGES } from '../src/string-const';
+import { MESSAGES } from '../src/common/helpers/string-const';
 
 /**
  * End-to-End Authentication Tests

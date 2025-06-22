@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { COOKIES, COOKIE_CONFIG } from '../../string-const';
+import { COOKIES, COOKIE_CONFIG } from './string-const';
 
 /**
  * Helper class for cookie operations

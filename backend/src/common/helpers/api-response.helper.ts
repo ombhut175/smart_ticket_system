@@ -1,4 +1,4 @@
-import { MESSAGES } from '../../string-const';
+import { MESSAGES } from './string-const';
 
 /**
  * Standardized API response interface
