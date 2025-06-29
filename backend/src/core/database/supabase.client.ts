@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { ENV } from '../../common/helpers/string-const';
 
 @Injectable()
 export class SupabaseService {
   private readonly client: SupabaseClient;
 
   constructor(private readonly configService: ConfigService) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const serviceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseUrl = this.configService.get<string>(ENV.SUPABASE_URL);
+    const serviceRoleKey = this.configService.get<string>(ENV.SUPABASE_SERVICE_ROLE_KEY);
 
     if (!supabaseUrl || !serviceRoleKey) {
       throw new Error('Missing Supabase environment variables');
@@ -34,7 +35,7 @@ export class SupabaseService {
    * Security (RLS) policies apply correctly.
    */
   getUserClient(accessToken: string): SupabaseClient {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseUrl = this.configService.get<string>(ENV.SUPABASE_URL);
 
     return createClient(supabaseUrl!, accessToken, {
       auth: {

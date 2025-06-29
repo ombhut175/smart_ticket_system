@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
+import { TestAppModule } from './test-app.module';
 import { MESSAGES } from '../src/common/helpers/string-const';
 
 /**
@@ -11,7 +10,7 @@ import { MESSAGES } from '../src/common/helpers/string-const';
  * Validates standardized response formats and error handling
  */
 describe('Authentication (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
   
   // Test user data for consistent testing
   const testUser = {
@@ -21,7 +20,7 @@ describe('Authentication (e2e)', () => {
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [TestAppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
@@ -171,7 +170,7 @@ describe('Authentication (e2e)', () => {
       // Check that Set-Cookie header clears the supabaseToken
       const setCookieHeader = response.headers['set-cookie'];
       if (setCookieHeader) {
-        expect(setCookieHeader.some((cookie: string) => 
+        expect(Array.isArray(setCookieHeader) && setCookieHeader.some((cookie: string) => 
           cookie.includes('supabaseToken=;')
         )).toBeTruthy();
       }

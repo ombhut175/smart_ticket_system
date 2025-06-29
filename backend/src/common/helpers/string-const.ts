@@ -4,6 +4,16 @@ export enum ENV {
   SUPABASE_SERVICE_ROLE_KEY = 'SUPABASE_SERVICE_ROLE_KEY',
   PORT = 'PORT',
   NODE_ENV = 'NODE_ENV',
+  // Inngest Environment Variables
+  INNGEST_EVENT_KEY = 'INNGEST_EVENT_KEY',
+  INNGEST_SIGNING_KEY = 'INNGEST_SIGNING_KEY',
+  // AI Environment Variables
+  GEMINI_API_KEY = 'GEMINI_API_KEY',
+  // SMTP Environment Variables
+  SMTP_HOST = 'MAILTRAP_SMTP_HOST',
+  SMTP_PORT = 'MAILTRAP_SMTP_PORT',
+  SMTP_USER = 'MAILTRAP_SMTP_USER',
+  SMTP_PASS = 'MAILTRAP_SMTP_PASS',
   // Add more environment variable keys as needed
 }
 
@@ -28,11 +38,27 @@ export enum TABLE_COLUMNS {
   USER_ID = 'user_id',
   SKILL_NAME = 'skill_name',
   PROFICIENCY_LEVEL = 'proficiency_level',
+  SKILLS = 'skills',
+  
+  // Tickets table columns
+  TITLE = 'title',
+  DESCRIPTION = 'description',
+  STATUS = 'status',
+  PRIORITY = 'priority',
+  CREATED_BY = 'created_by',
+  ASSIGNED_TO = 'assigned_to',
+  SUMMARY = 'summary',
+  HELPFUL_NOTES = 'helpful_notes',
+  RELATED_SKILLS = 'related_skills',
+  CREATED_AT = 'created_at',
+  UPDATED_AT = 'updated_at',
 }
 
 export enum QUERY_SELECTORS {
   ALL_FIELDS = '*',
   USERS_WITH_SKILLS = '*, user_skills(*)',
+  TICKET_BASIC_INFO = 'id, email',
+  TICKET_ASSIGNMENT_INFO = 'id, title, description, status, priority, created_by, assigned_to',
 }
 
 export enum MESSAGES {
@@ -60,6 +86,15 @@ export enum MESSAGES {
   CANNOT_DEMOTE_ADMIN = 'Cannot change admin user {email} to moderator',
   USER_PROFILE_NOT_FOUND = 'User profile not found',
   USER_ACCOUNT_DEACTIVATED = 'User account is deactivated',
+  
+  // Background Processing Messages
+  TICKET_NOT_FOUND = 'Ticket not found',
+  EMAIL_SENT_SUCCESS = 'Email sent to {email} for ticket {ticketId}',
+  EMAIL_SEND_FAILED = 'Failed to send email',
+  AI_ANALYSIS_FAILED = 'AI analysis failed',
+  AI_PARSE_FAILED = 'Failed to parse JSON from AI response',
+  ASSIGNMENT_FAILED = 'Assignment failed',
+  WORKFLOW_ERROR = 'Error in ticket processing workflow',
 }
 
 export enum COOKIES {
@@ -112,6 +147,7 @@ export enum API_PATHS {
   USERS = 'users',
   TICKETS = 'tickets',
   SKILLS = 'skills',
+  INNGEST = 'api/inngest',
 }
 
 export enum SWAGGER_TAGS {
@@ -119,6 +155,75 @@ export enum SWAGGER_TAGS {
   USERS = 'Users',
   TICKETS = 'Tickets',
   SKILLS = 'Skills',
+}
+
+export enum INNGEST_CONFIG {
+  CLIENT_ID = 'smart-ticket-system',
+  WORKFLOW_ID = 'on-ticket-created',
+  RETRIES = 2,
+}
+
+export enum INNGEST_EVENTS {
+  TICKET_CREATED = 'ticket/created',
+}
+
+export enum INNGEST_STEPS {
+  FETCH_TICKET = 'fetch-ticket',
+  UPDATE_TICKET_STATUS = 'update-ticket-status',
+  AI_PROCESSING = 'ai-processing',
+  ASSIGN_MODERATOR = 'assign-moderator',
+  SEND_EMAIL_NOTIFICATION = 'send-email-notification',
+}
+
+export enum AI_CONFIG {
+  MODEL = 'gemini-1.5-flash',
+}
+
+export enum EMAIL_CONFIG {
+  DEFAULT_PORT = 587,
+  SUBJECT_TICKET_ASSIGNED = 'Ticket Assigned',
+}
+
+export enum APP_CONFIG {
+  GLOBAL_PREFIX = 'api',
+  DEFAULT_PORT = 3000,
+  SWAGGER_PATH = 'api/docs',
+  API_VERSION = '1.0',
+  API_TITLE = 'Smart Ticket System API',
+  API_DESCRIPTION = 'API documentation for the Smart Ticket System',
+  COOKIE_AUTH_NAME = 'supabaseToken',
+}
+
+export enum LOG_MESSAGES {
+  // Server startup messages
+  SERVER_STARTED = '🚀 Smart Ticket System Backend Server Started',
+  SERVER_RUNNING = '🌐 Backend Server running at: {url}',
+  SWAGGER_AVAILABLE = '📚 API Documentation (Swagger) available at: {url}',
+  CORS_ENABLED = '🔓 CORS enabled with credentials support',
+  GLOBAL_PREFIX_SET = '🔗 Global API prefix set to: /{prefix}',
+  VALIDATION_ENABLED = '✅ Global validation pipe enabled',
+  EXCEPTION_FILTER_ENABLED = '🛡️ Global exception filter enabled for standardized responses',
+  COOKIE_PARSER_ENABLED = '🍪 Cookie parser middleware enabled',
+  
+  // Environment messages
+  ENVIRONMENT_MODE = '🏗️ Running in {mode} mode',
+  PORT_CONFIG = '⚙️ Port configuration: {port}',
+  
+  // Startup summary
+  STARTUP_COMPLETE = '✨ Application startup completed successfully',
+  READY_FOR_REQUESTS = '🎯 Ready to handle incoming requests',
+}
+
+export enum URL_PATTERNS {
+  LOCALHOST_HTTP = 'http://localhost:{port}',
+  LOCALHOST_HTTPS = 'https://localhost:{port}',
+  PRODUCTION_BASE = 'https://your-domain.com', // Update with actual production domain
+}
+
+export enum HOSTING_INFO {
+  LOCAL_DEVELOPMENT = 'Local Development Server',
+  PRODUCTION_PLATFORM = 'Production Environment', // Update with actual hosting platform (e.g., Heroku, AWS, etc.)
+  STAGING_PLATFORM = 'Staging Environment',
 }
 
 export type UserRole = `${USER_ROLES}`;

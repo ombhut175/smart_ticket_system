@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { supabaseConfigSchema, supabaseConfig } from './config/supabase.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { BackgroundModule } from './background/background.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UsersModule } from './modules/users/users.module';
     }),
     AuthModule,
     UsersModule,
+    BackgroundModule,
   ],
   controllers: [AppController],
   providers: [AppService],
