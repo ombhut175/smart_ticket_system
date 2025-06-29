@@ -27,8 +27,11 @@ export const createTicketCreatedWorkflow = (
     async ({ event, step }) => {
       try {
         const { ticketId } = event.data as { ticketId: string };
+        console.log(`🎫 Processing ticket workflow for ID: ${ticketId}`);
+        
         // Step 1: Fetch ticket
         const ticket = await step.run(INNGEST_STEPS.FETCH_TICKET as string, async () => {
+          console.log(`📋 Fetching ticket with ID: ${ticketId}`);
           const { data, error } = await supabaseService
             .getClient()
             .from(TABLES.TICKETS)
@@ -36,24 +39,30 @@ export const createTicketCreatedWorkflow = (
             .eq(TABLE_COLUMNS.ID, ticketId)
             .single();
           if (error || !data) {
+            console.error(`❌ Ticket not found: ${ticketId}`, error);
             throw new NonRetriableError(MESSAGES.TICKET_NOT_FOUND);
           }
+          console.log(`✅ Ticket fetched successfully: ${data.title}`);
           return data as any;
         });
 
         // Step 2: mark status TODO (processing start)
         await step.run(INNGEST_STEPS.UPDATE_TICKET_STATUS as string, async () => {
+          console.log(`🔄 Updating ticket status to TODO for: ${ticket.id}`);
           await supabaseService
             .getClient()
             .from(TABLES.TICKETS)
             .update({ [TABLE_COLUMNS.STATUS]: TICKET_STATUS.TODO })
             .eq(TABLE_COLUMNS.ID, ticket.id);
+          console.log(`✅ Ticket status updated to TODO`);
         });
 
         // Step 3: AI processing
         const relatedSkills = await step.run(INNGEST_STEPS.AI_PROCESSING as string, async () => {
+          console.log(`🤖 Starting AI analysis for ticket: ${ticket.title}`);
           const aiResponse = await aiService.analyzeTicket(ticket.title, ticket.description);
           if (aiResponse) {
+            console.log(`🧠 AI analysis complete. Priority: ${aiResponse.priority}, Skills: ${aiResponse.relatedSkills?.join(', ')}`);
             const validPriority = ['low', 'medium', 'high'].includes(aiResponse.priority)
               ? aiResponse.priority
               : 'medium';
@@ -69,8 +78,10 @@ export const createTicketCreatedWorkflow = (
                 [TABLE_COLUMNS.RELATED_SKILLS]: aiResponse.relatedSkills,
               })
               .eq(TABLE_COLUMNS.ID, ticket.id);
+            console.log(`✅ Ticket updated with AI insights`);
             return aiResponse.relatedSkills || [];
           }
+          console.log(`⚠️ No AI response received`);
           return [];
         });
 

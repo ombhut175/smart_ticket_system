@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AssignmentService } from './assignment.service';
-import { SupabaseService } from '../../core/database/supabase.client';
+import { DatabaseModule } from '../../core/database/database.module';
 
 @Module({
-  providers: [AssignmentService, SupabaseService],
+  imports: [DatabaseModule],
+  providers: [AssignmentService],
   exports: [AssignmentService],
 })
 export class AssignmentModule {} 

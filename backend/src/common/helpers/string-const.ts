@@ -59,6 +59,19 @@ export enum QUERY_SELECTORS {
   USERS_WITH_SKILLS = '*, user_skills(*)',
   TICKET_BASIC_INFO = 'id, email',
   TICKET_ASSIGNMENT_INFO = 'id, title, description, status, priority, created_by, assigned_to',
+  TICKET_WITH_SUMMARY = '*, summary',
+  TICKET_MODERATOR_VIEW = `
+    id, title, description, status, priority, created_at, updated_at,
+    summary, helpful_notes, related_skills,
+    assigned_to, created_by,
+    assignee:assigned_to(email),
+    creator:created_by(email)
+  `,
+  TICKET_WITH_RELATIONS = `
+    *, 
+    assignee:assigned_to(email),
+    creator:created_by(email)
+  `,
 }
 
 export enum MESSAGES {
@@ -77,6 +90,7 @@ export enum MESSAGES {
   NOT_FOUND = 'Resource not found',
   UNAUTHORIZED = 'Unauthorized access',
   FORBIDDEN = 'Forbidden access',
+  ACCESS_DENIED = 'Access denied',
   BAD_REQUEST = 'Bad request',
   INTERNAL_SERVER_ERROR = 'Internal server error',
   
@@ -87,8 +101,15 @@ export enum MESSAGES {
   USER_PROFILE_NOT_FOUND = 'User profile not found',
   USER_ACCOUNT_DEACTIVATED = 'User account is deactivated',
   
-  // Background Processing Messages
+  // Ticket Management Messages
   TICKET_NOT_FOUND = 'Ticket not found',
+  TICKET_UPDATE_FAILED = 'Ticket not found or update failed',
+  TICKET_DELETE_FAILED = 'Failed to delete ticket',
+  TICKET_DELETED_SUCCESS = 'Ticket deleted successfully: {id} by user: {userId}',
+  ONLY_MODERATORS_CAN_UPDATE = 'Only moderators can update tickets',
+  ONLY_MODERATORS_CAN_DELETE = 'Only moderators and admins can delete tickets',
+  
+  // Background Processing Messages
   EMAIL_SENT_SUCCESS = 'Email sent to {email} for ticket {ticketId}',
   EMAIL_SEND_FAILED = 'Failed to send email',
   AI_ANALYSIS_FAILED = 'AI analysis failed',
@@ -147,7 +168,7 @@ export enum API_PATHS {
   USERS = 'users',
   TICKETS = 'tickets',
   SKILLS = 'skills',
-  INNGEST = 'api/inngest',
+  INNGEST = 'inngest',
 }
 
 export enum SWAGGER_TAGS {
@@ -236,4 +257,29 @@ export type UserRole = `${USER_ROLES}`;
  */
 export function interpolateMessage(template: string, variables: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (match, key) => variables[key] || match);
+}
+
+export enum TICKET_DEFAULTS {
+  PRIORITY = 'medium',
+  STATUS = 'todo',
+  PAGE_SIZE = 20,
+}
+
+export enum ROLE_ARRAYS {
+  MODERATOR_AND_ADMIN = 'moderator,admin',
+  ALL_ROLES = 'user,moderator,admin',
+}
+
+/**
+ * Helper function to get role array for authorization checks
+ */
+export function getModeratorAndAdminRoles(): string[] {
+  return [USER_ROLES.MODERATOR, USER_ROLES.ADMIN];
+}
+
+/**
+ * Helper function to get all user roles
+ */
+export function getAllUserRoles(): string[] {
+  return [USER_ROLES.USER, USER_ROLES.MODERATOR, USER_ROLES.ADMIN];
 } 
