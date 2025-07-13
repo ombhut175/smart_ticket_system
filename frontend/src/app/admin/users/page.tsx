@@ -29,7 +29,7 @@ import {
   UserCheck,
   UserX,
   Shield,
-  User,
+  User as UserIcon,
   Crown,
   Users,
   UserPlus,
@@ -38,12 +38,21 @@ import {
 } from "lucide-react"
 
 // Add these imports at the top
+import { User, UserRole } from "@/types";
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { SidebarNav } from "@/components/navigation/sidebar-nav"
 
+interface ExtendedUser extends User {
+  id: string;
+  isActive: boolean;
+  createdAt: string;
+  lastLogin: string;
+  ticketCount: number;
+}
+
 // Mock data for demonstration
-const mockUsers = [
+const mockUsers: ExtendedUser[] = [
   {
     id: "1",
     email: "john.doe@example.com",
@@ -96,24 +105,24 @@ const mockUsers = [
   },
 ]
 
-const mockAdmin = {
+const mockAdmin: User = {
   name: "System Admin",
   email: "admin@company.com",
   role: "Admin",
   avatar: "",
 }
 
-function RoleBadge({ role }: { role: string }) {
-  const getRoleConfig = (role: string) => {
+function RoleBadge({ role }: { role: UserRole }) {
+  const getRoleConfig = (role: UserRole) => {
     switch (role) {
       case "Admin":
         return { color: "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400", icon: Crown }
       case "Moderator":
         return { color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400", icon: Shield }
       case "User":
-        return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: User }
+        return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: UserIcon }
       default:
-        return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: User }
+        return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: UserIcon }
     }
   }
 
@@ -151,10 +160,10 @@ export default function AdminUsersPage() {
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [selectedUser, setSelectedUser] = useState<ExtendedUser | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogType, setDialogType] = useState<"role" | "status">("role")
-  const [newRole, setNewRole] = useState("")
+  const [newRole, setNewRole] = useState<UserRole>("User")
 
   useEffect(() => {
     setMounted(true)
@@ -181,14 +190,14 @@ export default function AdminUsersPage() {
     users: mockUsers.filter((u) => u.role === "User").length,
   }
 
-  const handleRoleChange = (user: any) => {
+  const handleRoleChange = (user: ExtendedUser) => {
     setSelectedUser(user)
     setNewRole(user.role)
     setDialogType("role")
     setDialogOpen(true)
   }
 
-  const handleStatusToggle = (user: any) => {
+  const handleStatusToggle = (user: ExtendedUser) => {
     setSelectedUser(user)
     setDialogType("status")
     setDialogOpen(true)
@@ -285,7 +294,7 @@ export default function AdminUsersPage() {
                       <p className="text-3xl font-bold text-gray-600 dark:text-gray-400">{stats.users}</p>
                     </div>
                     <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-3">
-                      <User className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                      <UserIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                     </div>
                   </div>
                 </CardContent>
@@ -431,7 +440,7 @@ export default function AdminUsersPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Select New Role</label>
-                <Select value={newRole} onValueChange={setNewRole}>
+                <Select value={newRole} onValueChange={(value) => setNewRole(value as UserRole)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>

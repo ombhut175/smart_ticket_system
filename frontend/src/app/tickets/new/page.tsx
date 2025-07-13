@@ -13,12 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Ticket, Send, Loader2, CheckCircle } from "lucide-react"
 
 // Add these imports at the top
+import { User } from "@/types";
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 
-const mockUser = {
+const mockUser: User = {
   name: "John Doe",
   email: "john.doe@example.com",
+  role: "User",
   avatar: "",
 }
 

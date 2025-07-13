@@ -19,6 +19,7 @@ const EnhancedInput = React.forwardRef<HTMLInputElement, EnhancedInputProps>(
     const [showPassword, setShowPassword] = React.useState(false)
     const [isFocused, setIsFocused] = React.useState(false)
     const [hasValue, setHasValue] = React.useState(false)
+    const { onDrag, onDragEnd, onDragEnter, onDragExit, onDragLeave, onDragOver, onDragStart, onDrop, onAnimationStart, onAnimationEnd, onAnimationIteration, onTransitionEnd, ...rest } = props
 
     const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -81,7 +82,7 @@ const EnhancedInput = React.forwardRef<HTMLInputElement, EnhancedInputProps>(
               onChange={handleInputChange}
               whileFocus={{ scale: 1.01 }}
               transition={{ duration: 0.1 }}
-              {...props}
+              {...rest}
             />
 
             {type === "password" && (
