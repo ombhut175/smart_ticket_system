@@ -4,12 +4,16 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, Ticket, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { APIError } from "@/types"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -20,19 +24,34 @@ export default function LoginPage() {
     password: "",
   })
 
+  const { login, isAuthenticated } = useAuth()
+  const router = useRouter()
+
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    setIsLoading(false)
-    // Handle login logic here
+    try {
+      await login(formData)
+      toast.success('Login successful!')
+      router.push('/dashboard')
+    } catch (error) {
+      const apiError = error as APIError
+      toast.error(apiError.message || 'Login failed')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
