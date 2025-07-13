@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { motion } from "framer-motion"
+import { motion, Easing } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 interface EnhancedCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -12,6 +12,7 @@ interface EnhancedCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const EnhancedCard = React.forwardRef<HTMLDivElement, EnhancedCardProps>(
   ({ className, variant = "default", interactive = false, loading = false, children, ...props }, ref) => {
+    const { onDrag, onDragEnd, onDragEnter, onDragExit, onDragLeave, onDragOver, onDragStart, onDrop, onAnimationStart, onAnimationEnd, onAnimationIteration, onTransitionEnd, ...rest } = props
     const cardVariants = {
       default: "bg-card text-card-foreground border shadow-sm",
       elevated: "bg-card text-card-foreground border shadow-lg hover:shadow-xl",
@@ -23,7 +24,7 @@ const EnhancedCard = React.forwardRef<HTMLDivElement, EnhancedCardProps>(
       ? {
           whileHover: { scale: 1.02, y: -4 },
           whileTap: { scale: 0.98 },
-          transition: { duration: 0.2, ease: "easeOut" },
+          transition: { duration: 0.2, ease: "easeOut" as Easing },
         }
       : {}
 
@@ -53,7 +54,7 @@ const EnhancedCard = React.forwardRef<HTMLDivElement, EnhancedCardProps>(
           className,
         )}
         {...motionProps}
-        {...props}
+        {...rest}
       >
         {children}
       </motion.div>

@@ -10,6 +10,7 @@ import { Plus, Filter, Search, Clock, CheckCircle, Circle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
+import { User } from "@/types";
 
 // Mock data for demonstration
 const mockTickets = [
@@ -63,9 +64,10 @@ const mockTickets = [
   },
 ]
 
-const mockUser = {
+const mockUser: User = {
   name: "John Doe",
   email: "john.doe@example.com",
+  role: "User",
   avatar: "",
 }
 

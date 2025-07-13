@@ -26,6 +26,7 @@ import {
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { SidebarNav } from "@/components/navigation/sidebar-nav"
+import { User } from "@/types";
 
 // Mock data for demonstration
 const mockTickets = [
@@ -97,7 +98,7 @@ const mockModerators = [
   { email: "lisa.garcia@company.com", name: "Lisa Garcia" },
 ]
 
-const mockUser = {
+const mockUser: User = {
   name: "Sarah Wilson",
   email: "sarah.wilson@company.com",
   role: "Moderator",

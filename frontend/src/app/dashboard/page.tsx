@@ -1,8 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Clock, User, CheckCircle, AlertCircle, Circle, TrendingUp, Zap, Star } from "lucide-react"
+import { motion, AnimatePresence, Easing, Variants } from "framer-motion"
+import { Plus, Clock, User as UserIcon, CheckCircle, AlertCircle, Circle, TrendingUp, Zap, Star } from "lucide-react"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { QuickActions } from "@/components/navigation/quick-actions"
@@ -10,6 +10,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { User } from "@/types";
+
+interface ExtendedUser extends User {
+  profileComplete: boolean;
+  memberSince: string;
+  totalTickets: number;
+  resolvedTickets: number;
+}
 
 // Mock data for demonstration
 const mockTickets = [
@@ -55,9 +63,10 @@ const mockTickets = [
   },
 ]
 
-const mockUser = {
+const mockUser: ExtendedUser = {
   name: "John Doe",
   email: "john.doe@example.com",
+  role: "User",
   avatar: "",
   profileComplete: false,
   memberSince: "January 2024",
@@ -100,7 +109,7 @@ const stats = [
   },
 ]
 
-function StatusBadge({ status, urgency }: { status: string; urgency?: string }) {
+function StatusBadge({ status, urgency }: { status: string; urgency?: string }): JSX.Element {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "Open":
@@ -142,7 +151,7 @@ function StatusBadge({ status, urgency }: { status: string; urgency?: string }) 
   )
 }
 
-function PriorityBadge({ priority }: { priority: string }) {
+function PriorityBadge({ priority }: { priority: string }): JSX.Element {
   const getPriorityConfig = (priority: string) => {
     switch (priority) {
       case "High":
@@ -189,7 +198,7 @@ const containerVariants = {
   },
 }
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 30, scale: 0.95 },
   visible: {
     opacity: 1,
@@ -197,12 +206,12 @@ const itemVariants = {
     scale: 1,
     transition: {
       duration: 0.5,
-      ease: [0.16, 1, 0.3, 1],
+      ease: [0.16, 1, 0.3, 1] as Easing,
     },
   },
 }
 
-const ticketVariants = {
+const ticketVariants: Variants = {
   hidden: { opacity: 0, x: -20 },
   visible: (i: number) => ({
     opacity: 1,
@@ -210,7 +219,7 @@ const ticketVariants = {
     transition: {
       delay: i * 0.1,
       duration: 0.4,
-      ease: [0.16, 1, 0.3, 1],
+      ease: [0.16, 1, 0.3, 1] as Easing,
     },
   }),
   hover: {
@@ -232,10 +241,17 @@ export default function DashboardPage() {
 
   if (!mounted) return null
 
+  const userForHeader: User = {
+    name: mockUser.name,
+    email: mockUser.email,
+    role: mockUser.role,
+    avatar: mockUser.avatar,
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-950 dark:via-blue-950/20 dark:to-indigo-950/30">
       {/* Header */}
-      <Header user={mockUser} variant="user" />
+      <Header user={userForHeader} variant="user" />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -451,7 +467,7 @@ export default function DashboardPage() {
                 <Card className="shadow-lg">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5" />
+                      <UserIcon className="h-5 w-5" />
                       Profile
                     </CardTitle>
                   </CardHeader>

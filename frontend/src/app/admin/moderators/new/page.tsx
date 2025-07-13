@@ -11,11 +11,12 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, ArrowRight, UserPlus, Plus, Trash2, CheckCircle, Shield, Loader2 } from "lucide-react"
 
 // Add these imports at the top
+import { User } from "@/types";
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { SidebarNav } from "@/components/navigation/sidebar-nav"
 
-const mockAdmin = {
+const mockAdmin: User = {
   name: "System Admin",
   email: "admin@company.com",
   role: "Admin",

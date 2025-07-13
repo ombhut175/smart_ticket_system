@@ -48,6 +48,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, Var
 const EnhancedButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading = false, icon, rightIcon, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    const { onDrag, onDragEnd, onDragEnter, onDragExit, onDragLeave, onDragOver, onDragStart, onDrop, onAnimationStart, onAnimationEnd, onAnimationIteration, onTransitionEnd, ...rest } = props
 
     const content = (
       <>
@@ -77,7 +78,7 @@ const EnhancedButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.1 }}
-        {...props}
+        {...rest}
       >
         {content}
       </motion.button>

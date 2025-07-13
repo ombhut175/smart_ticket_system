@@ -18,7 +18,7 @@ import {
   Ticket,
   Shield,
   Crown,
-  User,
+  User as UserIcon,
   Settings,
   LogOut,
   Menu,
@@ -28,15 +28,11 @@ import {
   TrendingUp,
   Home,
 } from "lucide-react"
+import { User } from "@/types";
 
 interface HeaderProps {
-  user: {
-    name: string
-    email: string
-    role: "User" | "Moderator" | "Admin"
-    avatar?: string
-  }
-  variant?: "user" | "moderator" | "admin"
+  user: User;
+  variant?: "user" | "moderator" | "admin";
 }
 
 export function Header({ user, variant = "user" }: HeaderProps) {
@@ -207,7 +203,7 @@ export function Header({ user, variant = "user" }: HeaderProps) {
                         <AvatarFallback className={config.badgeColor}>
                           {user.name
                             .split(" ")
-                            .map((n) => n[0])
+                            .map((n: string) => n[0])
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
@@ -231,7 +227,7 @@ export function Header({ user, variant = "user" }: HeaderProps) {
                     <AvatarFallback className={config.badgeColor}>
                       {user.name
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
@@ -248,7 +244,7 @@ export function Header({ user, variant = "user" }: HeaderProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/profile">
-                    <User className="mr-2 h-4 w-4" />
+                    <UserIcon className="mr-2 h-4 w-4" />
                     Profile
                   </Link>
                 </DropdownMenuItem>
