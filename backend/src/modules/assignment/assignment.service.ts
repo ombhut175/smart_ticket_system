@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SupabaseService } from '../../core/database/supabase.client';
-import { TABLES, QUERY_SELECTORS, USER_ROLES, TABLE_COLUMNS, MESSAGES } from '../../common/helpers/string-const';
+import { TABLES, QUERY_SELECTORS, USER_ROLES, TABLE_COLUMNS, MESSAGES, LOG_MESSAGES, interpolateMessage } from '../../common/helpers/string-const';
 
 @Injectable()
 export class AssignmentService {
@@ -15,6 +15,9 @@ export class AssignmentService {
     ticketId: string,
     relatedSkills: string[],
   ): Promise<{ userId: string; email: string } | null> {
+    // Log auto-assignment start
+    this.logger.log(interpolateMessage(LOG_MESSAGES.ASSIGNMENT_AUTO_STARTED, { ticketId }));
+    
     try {
       let assignedUser: { id: string; email: string } | null = null;
 
@@ -45,12 +48,20 @@ export class AssignmentService {
           .update({ [TABLE_COLUMNS.ASSIGNED_TO]: assignedUser.id })
           .eq(TABLE_COLUMNS.ID, ticketId);
 
+        // Log successful assignment
+        this.logger.log(interpolateMessage(LOG_MESSAGES.ASSIGNMENT_AUTO_SUCCESS, { 
+          ticketId, 
+          assigneeId: assignedUser.id 
+        }));
+
         return { userId: assignedUser.id, email: assignedUser.email };
       }
 
+      // Log assignment failure (no suitable user found)
+      this.logger.warn(interpolateMessage(LOG_MESSAGES.ASSIGNMENT_AUTO_FAILED, { ticketId }));
       return null;
     } catch (error) {
-      this.logger.error(MESSAGES.ASSIGNMENT_FAILED, error as any);
+      this.logger.error(interpolateMessage(LOG_MESSAGES.ASSIGNMENT_AUTO_FAILED, { ticketId }), error);
       return null;
     }
   }

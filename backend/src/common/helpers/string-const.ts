@@ -233,6 +233,86 @@ export enum LOG_MESSAGES {
   // Startup summary
   STARTUP_COMPLETE = '✨ Application startup completed successfully',
   READY_FOR_REQUESTS = '🎯 Ready to handle incoming requests',
+
+  // Authentication operation messages
+  AUTH_SIGNUP_STARTED = '📝 User signup process started for email: {email}',
+  AUTH_SIGNUP_SUCCESS = '✅ User signup successful for email: {email}, user ID: {userId}',
+  AUTH_SIGNUP_FAILED = '❌ User signup failed for email: {email}',
+  AUTH_SIGNIN_STARTED = '🔐 User signin process started for email: {email}',
+  AUTH_SIGNIN_SUCCESS = '✅ User signin successful for email: {email}, user ID: {userId}',
+  AUTH_SIGNIN_FAILED = '❌ User signin failed for email: {email}',
+  AUTH_SIGNIN_UPDATE_USER_DATA = '🔄 Updating user record after successful signin for user: {userId}',
+  AUTH_SIGNOUT_STARTED = '🚪 User signout process started for user: {userId}',
+  AUTH_SIGNOUT_SUCCESS = '✅ User signout successful for user: {userId}',
+  AUTH_SIGNOUT_FAILED = '❌ User signout failed for user: {userId}',
+
+  // User operation messages
+  USER_PROFILE_FETCH_STARTED = '👤 Fetching user profile for user: {userId}',
+  USER_PROFILE_FETCH_SUCCESS = '✅ User profile fetched successfully for user: {userId}',
+  USER_PROFILE_UPDATE_STARTED = '📝 Updating user profile for user: {userId}',
+  USER_PROFILE_UPDATE_SUCCESS = '✅ User profile updated successfully for user: {userId}',
+  USER_PROFILE_UPDATE_FAILED = '❌ User profile update failed for user: {userId}',
+  USER_ROLE_UPDATE_STARTED = '🔧 Updating user role for user: {userId}, new role: {role}',
+  USER_ROLE_UPDATE_SUCCESS = '✅ User role updated successfully for user: {userId}, new role: {role}',
+  USER_TOGGLE_ACTIVE_STARTED = '🔄 Toggling user active status for user: {userId}',
+  USER_TOGGLE_ACTIVE_SUCCESS = '✅ User active status toggled successfully for user: {userId}, is_active: {isActive}',
+  USER_SKILL_ADD_STARTED = '🎯 Adding skill for user: {userId}, skill: {skill}',
+  USER_SKILL_ADD_SUCCESS = '✅ Skill added successfully for user: {userId}, skill: {skill}',
+  USER_ALL_FETCH_STARTED = '📋 Fetching all users with pagination',
+  USER_ALL_FETCH_SUCCESS = '✅ All users fetched successfully, count: {count}',
+
+  // Ticket operation messages
+  TICKET_CREATE_STARTED = '🎫 Creating new ticket for user: {userId}, title: {title}',
+  TICKET_CREATE_SUCCESS = '✅ Ticket created successfully with ID: {ticketId}',
+  TICKET_CREATE_FAILED = '❌ Ticket creation failed for user: {userId}',
+  TICKET_UPDATE_STARTED = '📝 Updating ticket: {ticketId} by user: {userId}',
+  TICKET_UPDATE_SUCCESS = '✅ Ticket updated successfully: {ticketId}',
+  TICKET_DELETE_STARTED = '🗑️ Deleting ticket: {ticketId} by user: {userId}',
+  TICKET_DELETE_SUCCESS = '✅ Ticket deleted successfully: {ticketId}',
+  TICKET_FETCH_STARTED = '📋 Fetching tickets for user: {userId}',
+  TICKET_FETCH_SUCCESS = '✅ Tickets fetched successfully for user: {userId}, count: {count}',
+  TICKET_FETCH_BY_ID_STARTED = '🔍 Fetching ticket by ID: {ticketId}',
+  TICKET_FETCH_BY_ID_SUCCESS = '✅ Ticket fetched successfully: {ticketId}',
+  TICKET_ALL_FETCH_STARTED = '📋 Fetching all tickets with filters',
+  TICKET_ALL_FETCH_SUCCESS = '✅ All tickets fetched successfully, count: {count}',
+
+  // Assignment operation messages
+  ASSIGNMENT_AUTO_STARTED = '🤖 Auto-assignment process started for ticket: {ticketId}',
+  ASSIGNMENT_AUTO_SUCCESS = '✅ Auto-assignment successful for ticket: {ticketId}, assigned to: {assigneeId}',
+  ASSIGNMENT_AUTO_FAILED = '❌ Auto-assignment failed for ticket: {ticketId}',
+  ASSIGNMENT_MANUAL_STARTED = '👤 Manual assignment started for ticket: {ticketId} to user: {assigneeId}',
+  ASSIGNMENT_MANUAL_SUCCESS = '✅ Manual assignment successful for ticket: {ticketId} to user: {assigneeId}',
+
+  // AI operation messages
+  AI_ANALYSIS_STARTED = '🧠 AI analysis started for ticket: {ticketId}',
+  AI_ANALYSIS_SUCCESS = '✅ AI analysis completed for ticket: {ticketId}, priority: {priority}, tags: {tags}',
+  AI_ANALYSIS_FAILED = '❌ AI analysis failed for ticket: {ticketId}',
+  AI_SERVICE_DISABLED = '⚠️ AI service disabled due to missing API key',
+
+  // Email operation messages
+  EMAIL_SEND_STARTED = '📧 Sending email notification to: {email} for ticket: {ticketId}',
+  EMAIL_SENT_SUCCESS = '✅ Email notification sent successfully to: {email} for ticket: {ticketId}',
+  EMAIL_SEND_FAILED = '❌ Email notification failed to send to: {email}',
+
+  // Controller endpoint messages
+  ENDPOINT_ACCESSED = '🌐 {method} {endpoint} accessed by user: {userId}',
+  ENDPOINT_COMPLETED = '✅ {method} {endpoint} completed successfully for user: {userId}',
+  ENDPOINT_FAILED = '❌ {method} {endpoint} failed for user: {userId}',
+
+  // Database operation messages
+  DB_QUERY_STARTED = '🗄️ Database query started: {operation} on table: {table}',
+  DB_QUERY_SUCCESS = '✅ Database query successful: {operation} on table: {table}',
+  DB_QUERY_FAILED = '❌ Database query failed: {operation} on table: {table}',
+
+  // Background job messages
+  BACKGROUND_JOB_STARTED = '⚙️ Background job started: {jobName}',
+  BACKGROUND_JOB_SUCCESS = '✅ Background job completed: {jobName}',
+  BACKGROUND_JOB_FAILED = '❌ Background job failed: {jobName}',
+
+  // Validation and security messages
+  VALIDATION_FAILED = '⚠️ Input validation failed for {operation}',
+  UNAUTHORIZED_ACCESS = '🚫 Unauthorized access attempt to {endpoint} by user: {userId}',
+  FORBIDDEN_ACCESS = '🚫 Forbidden access attempt to {endpoint} by user: {userId}',
 }
 
 export enum URL_PATTERNS {
