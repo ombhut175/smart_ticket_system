@@ -12,14 +12,25 @@ const api = axios.create({
   },
 });
 
+// Track if we've already tried to redirect to avoid loops
+let hasRedirected = false;
+
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+      // Handle unauthorized access, but avoid infinite loops
+      if (typeof window !== 'undefined' && !hasRedirected) {
+        const currentPath = window.location.pathname;
+        // Only redirect if not already on auth pages
+        if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
+          hasRedirected = true;
+          // Use setTimeout to avoid immediate redirect during API calls
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 100);
+        }
       }
     }
     return Promise.reject(error);
@@ -97,5 +108,10 @@ function handleApiError(error: any): APIError {
     path: error.config?.url || '',
   };
 }
+
+// Reset redirect flag (call this when login is successful)
+export const resetRedirectFlag = () => {
+  hasRedirected = false;
+};
 
 export default api;

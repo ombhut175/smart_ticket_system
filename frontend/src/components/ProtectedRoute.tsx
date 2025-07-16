@@ -22,31 +22,37 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (requireAuth && !isAuthenticated) {
+    // Wait for auth to complete loading
+    if (isLoading) return;
+    
+    // If we require auth and there's no user and we're not loading
+    if (requireAuth && !user && !isLoading) {
+      const currentPath = window.location.pathname;
+      // Don't redirect if already on auth pages
+      if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
         router.push(redirectTo);
+      }
+      return;
+    }
+
+    // Check role permissions
+    if (requiredRole && user) {
+      const roleHierarchy = { user: 0, moderator: 1, admin: 2 };
+      const userRoleLevel = roleHierarchy[user.role];
+      const requiredRoleLevel = roleHierarchy[requiredRole];
+
+      if (userRoleLevel < requiredRoleLevel) {
+        router.push('/permission-denied');
         return;
       }
-
-      if (requiredRole && user && user.role !== requiredRole) {
-        // Check if user has sufficient privileges
-        const roleHierarchy = { user: 0, moderator: 1, admin: 2 };
-        const userRoleLevel = roleHierarchy[user.role];
-        const requiredRoleLevel = roleHierarchy[requiredRole];
-
-        if (userRoleLevel < requiredRoleLevel) {
-          router.push('/permission-denied');
-          return;
-        }
-      }
     }
-  }, [isLoading, isAuthenticated, user, requireAuth, requiredRole, router, redirectTo]);
+  }, [isLoading, user, requireAuth, requiredRole, router, redirectTo]);
 
   if (isLoading) {
     return <DashboardSkeleton />;
   }
 
-  if (requireAuth && !isAuthenticated) {
+  if (requireAuth && !user && !isLoading) {
     return null; // Will redirect in useEffect
   }
 

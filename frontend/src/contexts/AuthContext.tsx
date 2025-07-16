@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, LoginData, SignupData } from '@/types';
 import { authService } from '@/services/auth.service';
+import { resetRedirectFlag } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -31,6 +32,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   const isAuthenticated = !!user;
 
@@ -50,28 +52,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Initialize auth state
   useEffect(() => {
+    let isMounted = true;
+    
     const initializeAuth = async () => {
+      if (initialized) return;
+      
       try {
         const userData = await authService.getCurrentUser();
-        // Add computed name field for backward compatibility
-        userData.name = getUserDisplayName(userData);
-        setUser(userData);
-      } catch (error) {
-        // User is not authenticated
-        setUser(null);
+        if (isMounted) {
+          // Add computed name field for backward compatibility
+          userData.name = getUserDisplayName(userData);
+          setUser(userData);
+        }
+      } catch (error: any) {
+        // User is not authenticated - this is normal
+        if (isMounted) {
+          setUser(null);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          setInitialized(true);
+        }
       }
     };
 
     initializeAuth();
-  }, []);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - only run once
 
   const login = async (credentials: LoginData): Promise<void> => {
     try {
       const { user: userData } = await authService.login(credentials);
       userData.name = getUserDisplayName(userData);
       setUser(userData);
+      resetRedirectFlag(); // Reset redirect flag on successful login
     } catch (error) {
       throw error;
     }
@@ -82,6 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { user: newUser } = await authService.signup(userData);
       newUser.name = getUserDisplayName(newUser);
       setUser(newUser);
+      resetRedirectFlag(); // Reset redirect flag on successful signup
     } catch (error) {
       throw error;
     }
@@ -103,6 +122,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData = await authService.getCurrentUser();
       userData.name = getUserDisplayName(userData);
       setUser(userData);
+      resetRedirectFlag(); // Reset redirect flag if user data is successfully fetched
     } catch (error) {
       setUser(null);
     }

@@ -21,7 +21,16 @@ export const authService = {
 
   // Get current user (check if authenticated)
   getCurrentUser: async (): Promise<User> => {
-    const response = await apiRequest.get<User>('/users/me');
-    return response.data;
+    try {
+      const response = await apiRequest.get<User>('/users/me');
+      return response.data;
+    } catch (error: any) {
+      // If it's a 401, user is not authenticated - don't throw
+      if (error.statusCode === 401 || error.response?.status === 401) {
+        throw new Error('Not authenticated');
+      }
+      // For other errors, rethrow
+      throw error;
+    }
   },
 };
