@@ -3,15 +3,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { Plus, Search, Users, Settings, TrendingUp, Shield } from "lucide-react"
+import { UserRole } from "@/types"
 
 interface QuickActionsProps {
-  userRole: "User" | "Moderator" | "Admin"
+  userRole: UserRole
 }
 
 export function QuickActions({ userRole }: QuickActionsProps) {
   const getUserActions = () => {
     switch (userRole) {
-      case "Admin":
+      case "admin":
         return [
           {
             title: "Manage Users",
@@ -35,7 +36,7 @@ export function QuickActions({ userRole }: QuickActionsProps) {
             color: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
           },
         ]
-      case "Moderator":
+      case "moderator":
         return [
           {
             title: "View All Tickets",

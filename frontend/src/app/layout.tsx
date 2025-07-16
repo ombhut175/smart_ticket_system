@@ -4,6 +4,9 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { NavigationProvider } from "@/components/navigation/navigation-provider"
+import { AuthProvider } from "@/contexts/AuthContext"
+import { Toaster } from "@/components/ui/sonner"
+import { StagewiseToolbarClient } from "@/components/stagewise-toolbar"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -21,8 +24,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange={false}>
-          <NavigationProvider>{children}</NavigationProvider>
+        <StagewiseToolbarClient />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange={false}>
+          <AuthProvider>
+            <NavigationProvider>
+              <Toaster />
+              {children}
+            </NavigationProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
