@@ -7,12 +7,19 @@ import * as cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { 
   APP_CONFIG, 
-  LOG_MESSAGES, 
   URL_PATTERNS, 
-  HOSTING_INFO, 
   ENV,
   interpolateMessage 
 } from './common/helpers/string-const';
+
+// Helper to get required env variable or throw error
+function getRequiredEnv(key: string): string {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
+}
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -21,8 +28,9 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     // Environment configuration
-    const port = parseInt(process.env[ENV.PORT] ?? APP_CONFIG.DEFAULT_PORT.toString());
-    const nodeEnv = process.env[ENV.NODE_ENV] ?? 'development';
+    // const port = parseInt(getRequiredEnv(ENV.PORT));
+    const port = 8080;
+    const nodeEnv = getRequiredEnv(ENV.NODE_ENV);
     const isProduction = nodeEnv === 'production';
 
     // Global prefix
