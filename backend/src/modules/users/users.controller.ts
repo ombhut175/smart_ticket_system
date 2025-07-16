@@ -1,9 +1,9 @@
-import { Controller, Get, Put, Body, UseGuards, Request, Param, Patch, Post } from '@nestjs/common';
+import { Controller, Get, Put, Body, UseGuards, Request, Param, Patch, Post, Logger } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { SWAGGER_TAGS, API_PATHS, MESSAGES, USER_ROLES, UserRole } from '../../common/helpers/string-const';
+import { SWAGGER_TAGS, API_PATHS, MESSAGES, USER_ROLES, UserRole, LOG_MESSAGES, interpolateMessage } from '../../common/helpers/string-const';
 import { ApiResponseHelper } from '../../common/helpers/api-response.helper';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -20,6 +20,8 @@ import { AddModeratorDto } from './dto/add-moderator.dto';
 @UseGuards(SupabaseAuthGuard)
 @Controller(API_PATHS.USERS)
 export class UsersController {
+  private readonly logger = new Logger(UsersController.name);
+
   constructor(private readonly usersService: UsersService) {}
 
   /**
@@ -68,8 +70,34 @@ export class UsersController {
      * 4. Return standardized response with profile data
      */
     const userId = req.user.id;
-    const profile = await this.usersService.getProfile(userId);
-    return ApiResponseHelper.success(profile, MESSAGES.SUCCESS);
+    
+    // Log endpoint access
+    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+      method: 'GET',
+      endpoint: '/users/me',
+      userId: userId
+    }));
+    
+    try {
+      const profile = await this.usersService.getProfile(userId);
+      
+      // Log successful endpoint completion
+      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+        method: 'GET',
+        endpoint: '/users/me',
+        userId: userId
+      }));
+      
+      return ApiResponseHelper.success(profile, MESSAGES.SUCCESS);
+    } catch (error) {
+      // Log endpoint failure
+      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+        method: 'GET',
+        endpoint: '/users/me',
+        userId: userId
+      }), error);
+      throw error;
+    }
   }
 
   /**
@@ -81,8 +109,34 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   async updateMe(@Request() req, @Body() dto: UpdateProfileDto) {
     const userId = req.user.id;
-    const updated = await this.usersService.updateProfile(userId, dto);
-    return ApiResponseHelper.success(updated, MESSAGES.UPDATED);
+    
+    // Log endpoint access
+    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+      method: 'PUT',
+      endpoint: '/users/me',
+      userId: userId
+    }));
+    
+    try {
+      const updated = await this.usersService.updateProfile(userId, dto);
+      
+      // Log successful endpoint completion
+      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+        method: 'PUT',
+        endpoint: '/users/me',
+        userId: userId
+      }));
+      
+      return ApiResponseHelper.success(updated, MESSAGES.UPDATED);
+    } catch (error) {
+      // Log endpoint failure
+      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+        method: 'PUT',
+        endpoint: '/users/me',
+        userId: userId
+      }), error);
+      throw error;
+    }
   }
 
   //#region ==================== ADMIN ENDPOINTS ====================
@@ -162,8 +216,33 @@ export class UsersController {
     @Param('id') id: string,
     @Body() dto: UpdateRoleDto,
   ) {
-    const updated = await this.usersService.updateRole(id, dto.role);
-    return ApiResponseHelper.success(updated, MESSAGES.UPDATED);
+    // Log endpoint access
+    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+      method: 'PATCH',
+      endpoint: `/users/${id}/role`,
+      userId: 'admin_user'
+    }));
+    
+    try {
+      const updated = await this.usersService.updateRole(id, dto.role);
+      
+      // Log successful endpoint completion
+      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+        method: 'PATCH',
+        endpoint: `/users/${id}/role`,
+        userId: 'admin_user'
+      }));
+      
+      return ApiResponseHelper.success(updated, MESSAGES.UPDATED);
+    } catch (error) {
+      // Log endpoint failure
+      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+        method: 'PATCH',
+        endpoint: `/users/${id}/role`,
+        userId: 'admin_user'
+      }), error);
+      throw error;
+    }
   }
 
   /**

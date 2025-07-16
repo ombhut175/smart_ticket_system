@@ -14,6 +14,7 @@ import {
   QUERY_SELECTORS,
   TABLE_COLUMNS,
   MESSAGES,
+  LOG_MESSAGES,
   interpolateMessage
 } from '../../common/helpers/string-const';
 
@@ -29,6 +30,12 @@ export class TicketsService {
   //#region ==================== TICKET CREATION ====================
 
   async create(createTicketDto: CreateTicketDto, userId: string): Promise<Ticket> {
+    // Log ticket creation start
+    this.logger.log(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_STARTED, { 
+      userId, 
+      title: createTicketDto.title 
+    }));
+    
     try {
       // Insert ticket into database
       const { data: ticket, error } = await this.supabaseService
@@ -45,6 +52,7 @@ export class TicketsService {
         .single();
 
       if (error) {
+        this.logger.error(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }), error);
         throw new BadRequestException(error.message);
       }
 
@@ -60,10 +68,14 @@ export class TicketsService {
         },
       });
 
-      this.logger.log(`✅ Ticket created: ${ticket[TABLE_COLUMNS.ID]}, Inngest workflow triggered`);
+      // Log successful ticket creation
+      this.logger.log(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_SUCCESS, { 
+        ticketId: ticket[TABLE_COLUMNS.ID] 
+      }));
+      
       return ticket;
     } catch (error) {
-      this.logger.error('Error creating ticket', error);
+      this.logger.error(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }), error);
       throw error;
     }
   }

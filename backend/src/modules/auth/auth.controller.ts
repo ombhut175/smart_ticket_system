@@ -1,10 +1,10 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Res, Logger } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
-import { SWAGGER_TAGS, MESSAGES, API_PATHS } from '../../common/helpers/string-const';
+import { SWAGGER_TAGS, MESSAGES, API_PATHS, LOG_MESSAGES, interpolateMessage } from '../../common/helpers/string-const';
 import { ApiResponseHelper } from '../../common/helpers/api-response.helper';
 import { CookieHelper } from '../../common/helpers/cookie.helper';
 
@@ -16,6 +16,8 @@ import { CookieHelper } from '../../common/helpers/cookie.helper';
 @ApiTags(SWAGGER_TAGS.AUTHENTICATION)
 @Controller(API_PATHS.AUTH)
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   //#region ==================== USER REGISTRATION ====================
@@ -55,19 +57,44 @@ export class AuthController {
      * 3. Supabase creates user record and sends confirmation email if configured
      * 4. Return standardized success response with user data (excluding sensitive info)
      */
-    const result = await this.authService.signUp(signupDto);
     
-    return ApiResponseHelper.created(
-      {
-        user: {
-          id: result.user?.id,
-          email: result.user?.email,
-          email_confirmed_at: result.user?.email_confirmed_at,
+    // Log endpoint access
+    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+      method: 'POST',
+      endpoint: '/auth/signup',
+      userId: 'anonymous'
+    }));
+    
+    try {
+      const result = await this.authService.signUp(signupDto);
+      
+      // Log successful signup endpoint completion
+      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+        method: 'POST',
+        endpoint: '/auth/signup',
+        userId: result.user?.id || 'unknown'
+      }));
+      
+      return ApiResponseHelper.created(
+        {
+          user: {
+            id: result.user?.id,
+            email: result.user?.email,
+            email_confirmed_at: result.user?.email_confirmed_at,
+          },
+          session: result.session, // Will be null if email confirmation required
         },
-        session: result.session, // Will be null if email confirmation required
-      },
-      MESSAGES.USER_SIGNED_UP_SUCCESS
-    );
+        MESSAGES.USER_SIGNED_UP_SUCCESS
+      );
+    } catch (error) {
+      // Log endpoint failure
+      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+        method: 'POST',
+        endpoint: '/auth/signup',
+        userId: 'anonymous'
+      }), error);
+      throw error;
+    }
   }
 
   //#endregion
@@ -117,27 +144,53 @@ export class AuthController {
      * 5. Store access_token in secure HTTP-only cookie via CookieHelper
      * 6. Return success response with user info (token excluded for security)
      */
-    const { session, user } = await this.authService.signIn(loginDto);
+    
+    // Log endpoint access
+    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+      method: 'POST',
+      endpoint: '/auth/login',
+      userId: 'anonymous'
+    }));
+    
+    try {
+      const { session, user } = await this.authService.signIn(loginDto);
 
-    // Set secure authentication cookie if session exists
-    if (session?.access_token) {
-      CookieHelper.setAuthToken(res, session.access_token);
-    }
+      // Set secure authentication cookie if session exists
+      if (session?.access_token) {
+        CookieHelper.setAuthToken(res, session.access_token);
+        this.logger.log(`Authentication cookie set for user: ${user?.id}`);
+      }
 
-    return ApiResponseHelper.success(
-      {
-        user: {
-          id: user?.id,
-          email: user?.email,
-          last_sign_in_at: user?.last_sign_in_at,
+      // Log successful login endpoint completion
+      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+        method: 'POST',
+        endpoint: '/auth/login',
+        userId: user?.id || 'unknown'
+      }));
+
+      return ApiResponseHelper.success(
+        {
+          user: {
+            id: user?.id,
+            email: user?.email,
+            last_sign_in_at: user?.last_sign_in_at,
+          },
+          sessionInfo: {
+            expires_at: session?.expires_at,
+            token_type: session?.token_type,
+          }
         },
-        sessionInfo: {
-          expires_at: session?.expires_at,
-          token_type: session?.token_type,
-        }
-      },
-      MESSAGES.USER_LOGGED_IN_SUCCESS
-    );
+        MESSAGES.USER_LOGGED_IN_SUCCESS
+      );
+    } catch (error) {
+      // Log endpoint failure
+      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+        method: 'POST',
+        endpoint: '/auth/login',
+        userId: 'anonymous'
+      }), error);
+      throw error;
+    }
   }
 
   //#endregion
@@ -178,19 +231,48 @@ export class AuthController {
      * 4. Return success response confirming logout completion
      * Note: Even if no token exists, we return success for security (no information leakage)
      */
-    const token = CookieHelper.getAuthToken(res.req.cookies);
     
-    if (token) {
-      await this.authService.signOut(token);
-    }
+    // Log endpoint access
+    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+      method: 'POST',
+      endpoint: '/auth/logout',
+      userId: 'current_user'
+    }));
     
-    // Always clear cookie regardless of token validity
-    CookieHelper.clearAuthToken(res);
+    try {
+      const token = CookieHelper.getAuthToken(res.req.cookies);
+      
+      if (token) {
+        this.logger.log('Authentication token found, proceeding with session invalidation');
+        await this.authService.signOut(token);
+      } else {
+        this.logger.log('No authentication token found, proceeding with cookie cleanup only');
+      }
+      
+      // Always clear cookie regardless of token validity
+      CookieHelper.clearAuthToken(res);
+      this.logger.log('Authentication cookie cleared');
 
-    return ApiResponseHelper.success(
-      null,
-      MESSAGES.USER_LOGGED_OUT_SUCCESS
-    );
+      // Log successful logout endpoint completion
+      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+        method: 'POST',
+        endpoint: '/auth/logout',
+        userId: 'logged_out_user'
+      }));
+
+      return ApiResponseHelper.success(
+        null,
+        MESSAGES.USER_LOGGED_OUT_SUCCESS
+      );
+    } catch (error) {
+      // Log endpoint failure
+      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+        method: 'POST',
+        endpoint: '/auth/logout',
+        userId: 'current_user'
+      }), error);
+      throw error;
+    }
   }
 
   //#endregion

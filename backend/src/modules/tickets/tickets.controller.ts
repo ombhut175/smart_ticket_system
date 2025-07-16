@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
@@ -10,13 +10,15 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { ApiResponse as StandardApiResponse, ApiResponseHelper } from '../../common/helpers/api-response.helper';
 import { Ticket } from './interfaces/ticket.interface';
 import { TicketEntity } from './entities/ticket.entity';
-import { USER_ROLES, SWAGGER_TAGS } from '../../common/helpers/string-const';
+import { USER_ROLES, SWAGGER_TAGS, LOG_MESSAGES, interpolateMessage } from '../../common/helpers/string-const';
 
 @Controller('tickets')
 @UseGuards(SupabaseAuthGuard)
 @ApiTags(SWAGGER_TAGS.TICKETS)
 @ApiBearerAuth()
 export class TicketsController {
+  private readonly logger = new Logger(TicketsController.name);
+
   constructor(private readonly ticketsService: TicketsService) {}
 
   //#region ==================== TICKET CREATION ====================
@@ -34,8 +36,35 @@ export class TicketsController {
     @Body() createTicketDto: CreateTicketDto,
     @Request() req
   ): Promise<StandardApiResponse<Ticket>> {
-    const ticket = await this.ticketsService.create(createTicketDto, req.user.id);
-    return ApiResponseHelper.created(ticket, 'Ticket created and processing started');
+    const userId = req.user.id;
+    
+    // Log endpoint access
+    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+      method: 'POST',
+      endpoint: '/tickets',
+      userId: userId
+    }));
+    
+    try {
+      const ticket = await this.ticketsService.create(createTicketDto, userId);
+      
+      // Log successful endpoint completion
+      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+        method: 'POST',
+        endpoint: '/tickets',
+        userId: userId
+      }));
+      
+      return ApiResponseHelper.created(ticket, 'Ticket created and processing started');
+    } catch (error) {
+      // Log endpoint failure
+      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+        method: 'POST',
+        endpoint: '/tickets',
+        userId: userId
+      }), error);
+      throw error;
+    }
   }
 
   //#endregion
