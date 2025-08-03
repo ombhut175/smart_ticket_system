@@ -325,6 +325,38 @@ export class UsersService {
   }
 
   /**
+   * Get all users with their skills (admin only)
+   */
+  async getAllUsers() {
+    this.logger.log('Fetching all users with skills');
+    
+    try {
+      const { data, error } = await this.supabase
+        .getClient()
+        .from(TABLES.USERS)
+        .select(QUERY_SELECTORS.USERS_WITH_SKILLS)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        this.logger.error('Failed to fetch users', error);
+        throw new BadRequestException(error.message);
+      }
+
+      const result = (data || []).map((u: any) => ({
+        ...u,
+        skills: u.user_skills || [],
+      }));
+
+      this.logger.log(`Successfully fetched ${result.length} users`);
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to fetch users', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get all moderators with their skills
    */
   async getModerators() {

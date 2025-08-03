@@ -48,7 +48,7 @@ export function QuickActions({ userRole }: QuickActionsProps) {
           {
             title: "Analytics",
             description: "View ticket statistics and trends",
-            href: "/moderator/analytics",
+            href: "/moderator/dashboard",
             icon: TrendingUp,
             color: "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400",
           },
@@ -90,10 +90,10 @@ export function QuickActions({ userRole }: QuickActionsProps) {
                 key={action.href}
                 asChild
                 variant="outline"
-                className="h-auto p-4 justify-start bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="h-auto p-4 justify-start bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 whitespace-normal"
               >
                 <Link href={action.href}>
-                  <div className="flex items-start gap-3 w-full">
+                  <div className="flex items-center gap-3 w-full">
                     <div className={`rounded-lg p-2 ${action.color}`}>
                       <IconComponent className="h-5 w-5" />
                     </div>

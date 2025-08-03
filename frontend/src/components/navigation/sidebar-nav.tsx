@@ -45,6 +45,12 @@ export function SidebarNav({ userRole, className }: SidebarNavProps) {
             badge: null,
           },
           {
+            title: "All Tickets",
+            href: "/admin/tickets",
+            icon: Ticket,
+            badge: null,
+          },
+          {
             title: "Promote Moderator",
             href: "/admin/moderators/new",
             icon: UserPlus,

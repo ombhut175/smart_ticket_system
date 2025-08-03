@@ -520,6 +520,89 @@ export class UsersController {
   }
 
   /**
+   * Get all users with their skills (ADMIN only)
+   */
+  @Get('all')
+  @Roles(USER_ROLES.ADMIN)
+  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @ApiOperation({ 
+    summary: '[ADMIN ONLY] Get all users', 
+    description: 'Retrieves a complete list of all users in the system along with their associated skills. This endpoint performs a JOIN query between the users and user_skills tables to provide comprehensive user information including their skill sets and proficiency levels. Useful for admin dashboards and user management interfaces.' 
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'List of all users with skills retrieved successfully',
+    example: {
+      success: true,
+      statusCode: 200,
+      message: 'Success',
+      data: [
+        {
+          id: 'uuid-123-456-789',
+          email: 'user@example.com',
+          role: 'user',
+          first_name: 'John',
+          last_name: 'Doe',
+          is_active: true,
+          is_email_verified: true,
+          last_login_at: '2023-01-01T00:00:00.000Z',
+          created_at: '2023-01-01T00:00:00.000Z',
+          updated_at: '2023-01-01T00:00:00.000Z',
+          skills: []
+        },
+        {
+          id: 'uuid-987-654-321',
+          email: 'moderator@example.com',
+          role: 'moderator',
+          first_name: 'Jane',
+          last_name: 'Smith',
+          is_active: true,
+          is_email_verified: true,
+          last_login_at: '2023-01-01T00:00:00.000Z',
+          created_at: '2023-01-01T00:00:00.000Z',
+          updated_at: '2023-01-01T00:00:00.000Z',
+          skills: [
+            {
+              id: 'skill-uuid-1',
+              user_id: 'uuid-987-654-321',
+              skill_name: 'JavaScript',
+              proficiency_level: 'advanced',
+              created_at: '2023-01-01T00:00:00.000Z'
+            }
+          ]
+        }
+      ],
+      timestamp: '2023-01-01T00:00:00.000Z'
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Unauthorized - Missing or invalid authentication token',
+    example: {
+      success: false,
+      statusCode: 401,
+      message: 'Unauthorized access',
+      timestamp: '2023-01-01T00:00:00.000Z',
+      path: '/api/users/all'
+    }
+  })
+  @ApiResponse({ 
+    status: 403, 
+    description: 'Forbidden - User does not have ADMIN role',
+    example: {
+      success: false,
+      statusCode: 403,
+      message: 'Access denied. Required roles: [admin], User role: user',
+      timestamp: '2023-01-01T00:00:00.000Z',
+      path: '/api/users/all'
+    }
+  })
+  async getAllUsers() {
+    const users = await this.usersService.getAllUsers();
+    return ApiResponseHelper.success(users, MESSAGES.SUCCESS);
+  }
+
+  /**
    * Get all moderators with their skills (ADMIN only)
    */
   @Get('moderator')
