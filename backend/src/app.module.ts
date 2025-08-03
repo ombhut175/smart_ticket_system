@@ -6,12 +6,16 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { BackgroundModule } from './background/background.module';
+import { PrismaModule } from './core/prisma/prisma.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    PrismaModule,
+    HealthModule,
     AuthModule,
     UsersModule,
     TicketsModule,
