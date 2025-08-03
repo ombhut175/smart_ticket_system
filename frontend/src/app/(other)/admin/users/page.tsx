@@ -51,75 +51,22 @@ interface ExtendedUser extends User {
   ticketCount: number;
 }
 
-// Mock data for demonstration
-const mockUsers: ExtendedUser[] = [
-  {
-    id: "1",
-    email: "john.doe@example.com",
-    name: "John Doe",
-    role: "User",
-    isActive: true,
-    createdAt: "2024-01-10T09:15:00Z",
-    lastLogin: "2024-01-15T14:30:00Z",
-    ticketCount: 5,
-  },
-  {
-    id: "2",
-    email: "sarah.wilson@company.com",
-    name: "Sarah Wilson",
-    role: "Moderator",
-    isActive: true,
-    createdAt: "2023-12-01T10:00:00Z",
-    lastLogin: "2024-01-15T16:45:00Z",
-    ticketCount: 23,
-  },
-  {
-    id: "3",
-    email: "mike.johnson@company.com",
-    name: "Mike Johnson",
-    role: "Moderator",
-    isActive: true,
-    createdAt: "2023-11-15T11:20:00Z",
-    lastLogin: "2024-01-15T12:20:00Z",
-    ticketCount: 18,
-  },
-  {
-    id: "4",
-    email: "alice.smith@example.com",
-    name: "Alice Smith",
-    role: "User",
-    isActive: false,
-    createdAt: "2024-01-05T15:45:00Z",
-    lastLogin: "2024-01-12T09:30:00Z",
-    ticketCount: 2,
-  },
-  {
-    id: "5",
-    email: "admin@company.com",
-    name: "System Admin",
-    role: "Admin",
-    isActive: true,
-    createdAt: "2023-01-01T00:00:00Z",
-    lastLogin: "2024-01-15T17:00:00Z",
-    ticketCount: 0,
-  },
-]
+// Add api-client import
+import { apiClient } from '@/lib/api-client';
+import { useAuth } from '@/hooks/useAuth';
 
-const mockAdmin: User = {
-  name: "System Admin",
-  email: "admin@company.com",
-  role: "Admin",
-  avatar: "",
-}
+// Remove mock data
+//]
 
 function RoleBadge({ role }: { role: UserRole }) {
   const getRoleConfig = (role: UserRole) => {
-    switch (role) {
-      case "Admin":
+    const normalizedRole = role.toLowerCase();
+    switch (normalizedRole) {
+      case "admin":
         return { color: "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400", icon: Crown }
-      case "Moderator":
+      case "moderator":
         return { color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400", icon: Shield }
-      case "User":
+      case "user":
         return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: UserIcon }
       default:
         return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: UserIcon }
@@ -131,7 +78,7 @@ function RoleBadge({ role }: { role: UserRole }) {
   return (
     <Badge className={`${color} flex items-center gap-1 font-medium`}>
       <Icon className="h-3 w-3" />
-      {role}
+      {role.charAt(0).toUpperCase() + role.slice(1)}
     </Badge>
   )
 }
@@ -151,12 +98,14 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
   )
 }
 
-function formatDate(dateString: string) {
+function formatDate(dateString: string | null) {
+  if (!dateString) return "Never"
   const date = new Date(dateString)
   return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 }
 
 export default function AdminUsersPage() {
+  const { user: currentUser, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -165,17 +114,68 @@ export default function AdminUsersPage() {
   const [dialogType, setDialogType] = useState<"role" | "status">("role")
   const [newRole, setNewRole] = useState<UserRole>("User")
 
+  // State for users and loading
+  const [users, setUsers] = useState<ExtendedUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch users from backend
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        setLoading(true);
+        const userData = await apiClient.getAllUsers();
+        setUsers(userData.map((user: any) => ({
+          ...user,
+          name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email,
+          isActive: user.is_active,
+          createdAt: user.created_at,
+          lastLogin: user.last_login_at,
+          ticketCount: 0 // Assuming you want to display ticket count, revise if you fetch this too
+        })));
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUsers();
+  }, []);
+
   useEffect(() => {
     setMounted(true)
   }, [])
 
   if (!mounted) return null
 
+  // Early return if not authenticated or loading
+  if (authLoading || !currentUser) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 dark:border-gray-100"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Check if user has admin role
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Access Denied</h1>
+          <p className="text-muted-foreground">You don't have permission to access this page.</p>
+        </div>
+      </div>
+    )
+  }
+
   // Filter users based on search
-  const filteredUsers = mockUsers.filter((user) => {
+  const filteredUsers = users.filter((user) => {
     const matchesSearch =
       searchQuery === "" ||
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.role.toLowerCase().includes(searchQuery.toLowerCase())
 
@@ -183,11 +183,11 @@ export default function AdminUsersPage() {
   })
 
   const stats = {
-    total: mockUsers.length,
-    active: mockUsers.filter((u) => u.isActive).length,
-    admins: mockUsers.filter((u) => u.role === "Admin").length,
-    moderators: mockUsers.filter((u) => u.role === "Moderator").length,
-    users: mockUsers.filter((u) => u.role === "User").length,
+    total: users.length,
+    active: users.filter((u) => u.isActive).length,
+    admins: users.filter((u) => u.role === "Admin" || u.role === "admin").length,
+    moderators: users.filter((u) => u.role === "Moderator" || u.role === "moderator").length,
+    users: users.filter((u) => u.role === "User" || u.role === "user").length,
   }
 
   const handleRoleChange = (user: ExtendedUser) => {
@@ -203,13 +203,46 @@ export default function AdminUsersPage() {
     setDialogOpen(true)
   }
 
+  const handleConfirmAction = async () => {
+    if (!selectedUser) return
+
+    try {
+      setLoading(true)
+      
+      if (dialogType === "role") {
+        await apiClient.updateUserRole(selectedUser.id, newRole.toLowerCase())
+      } else {
+        await apiClient.toggleUserActive(selectedUser.id, !selectedUser.isActive)
+      }
+      
+      // Refresh the users list
+      const userData = await apiClient.getAllUsers()
+      setUsers(userData.map((user: any) => ({
+        ...user,
+        name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email,
+        isActive: user.is_active,
+        createdAt: user.created_at,
+        lastLogin: user.last_login_at,
+        ticketCount: 0
+      })))
+      
+      setDialogOpen(false)
+      setSelectedUser(null)
+    } catch (err) {
+      console.error("Failed to update user:", err)
+      alert("Failed to update user. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20">
       {/* Header */}
-      <Header user={mockAdmin} variant="admin" />
+      <Header user={currentUser} variant="admin" />
 
       <div className="flex">
-        <SidebarNav userRole="Admin" />
+        <SidebarNav userRole={currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)} />
 
         <main className="flex-1 overflow-hidden">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -343,7 +376,13 @@ export default function AdminUsersPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredUsers.length === 0 ? (
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            Loading users...
+                          </TableCell>
+                        </TableRow>
+                      ) : filteredUsers.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={6} className="text-center py-8 text-gray-500 dark:text-gray-400">
                             No users found matching your search
@@ -459,16 +498,11 @@ export default function AdminUsersPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                // Handle the action here
-                console.log(
-                  dialogType === "role" ? `Change role to ${newRole}` : `Toggle status for ${selectedUser?.name}`,
-                )
-                setDialogOpen(false)
-              }}
+              onClick={handleConfirmAction}
+              disabled={loading}
               className={dialogType === "status" && selectedUser?.isActive ? "bg-red-600 hover:bg-red-700" : ""}
             >
-              {dialogType === "role" ? "Change Role" : selectedUser?.isActive ? "Deactivate" : "Activate"}
+              {loading ? "Processing..." : (dialogType === "role" ? "Change Role" : selectedUser?.isActive ? "Deactivate" : "Activate")}
             </Button>
           </DialogFooter>
         </DialogContent>

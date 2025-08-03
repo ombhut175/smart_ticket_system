@@ -25,9 +25,26 @@ export function useAuth() {
       setLoading(true);
       setError(null);
       const userData = await apiClient.getCurrentUser();
-      setUser(userData);
+      
+      // Add name property for compatibility
+      const userWithName = {
+        ...userData,
+        name: userData.first_name && userData.last_name 
+          ? `${userData.first_name} ${userData.last_name}`
+          : userData.email
+      };
+      
+      setUser(userWithName);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch user');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch user';
+      console.log('Auth error:', errorMessage);
+      
+      // Don't set error state for authentication failures, just set user to null
+      if (errorMessage.includes('authentication') || errorMessage.includes('401')) {
+        setError(null);
+      } else {
+        setError(errorMessage);
+      }
       setUser(null);
     } finally {
       setLoading(false);

@@ -217,16 +217,15 @@ export function Header({ user, variant = "user" }: HeaderProps) {
                   <div className="border-t pt-6">
                     <div className="flex items-center gap-3 px-4 py-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                        <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name || user.email} />
                         <AvatarFallback className={config.badgeColor}>
                           {user.name
-                            .split(" ")
-                            .map((n: string) => n[0])
-                            .join("")}
+                            ? user.name.split(" ").map((n: string) => n[0]).join("")
+                            : user.email.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{user.name || user.email}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                         <Badge className={`mt-1 ${config.badgeColor}`}>{user.role}</Badge>
                       </div>
@@ -272,12 +271,11 @@ export function Header({ user, variant = "user" }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name || user.email} />
                     <AvatarFallback className={config.badgeColor}>
                       {user.name
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")}
+                        ? user.name.split(" ").map((n: string) => n[0]).join("")
+                        : user.email.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -285,7 +283,7 @@ export function Header({ user, variant = "user" }: HeaderProps) {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{user.name}</p>
+                    <p className="font-medium">{user.name || user.email}</p>
                     <p className="w-[200px] truncate text-sm text-muted-foreground">{user.email}</p>
                     <Badge className={`w-fit ${config.badgeColor}`}>{user.role}</Badge>
                   </div>
