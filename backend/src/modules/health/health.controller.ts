@@ -1,13 +1,13 @@
 import { Controller, Get, HttpStatus, HttpException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PrismaService } from '../../core/prisma/prisma.service';
+import { SupabaseService } from '../../core/database/supabase.client';
 import { ApiResponseHelper } from '../../common/helpers/api-response.helper';
 
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(
-    private readonly prismaService: PrismaService,
+    private readonly supabaseService: SupabaseService,
   ) {}
 
   @Get()
@@ -78,10 +78,16 @@ export class HealthController {
   })
   async getDatabaseHealth() {
     try {
-      // Check database connection using Prisma
-      const connectionInfo = await this.prismaService.checkConnection();
+      // Check database connection using Supabase
+      const { data: connectionTest, error: connectionError } = await this.supabaseService
+        .getClient()
+        .from('users')
+        .select('count')
+        .limit(1);
 
-      // Get database statistics using Prisma
+      const isConnected = !connectionError;
+
+      // Get database statistics using Supabase
       let databaseHealth: {
         isConnected: boolean;
         databaseName?: string;
@@ -92,29 +98,35 @@ export class HealthController {
         totalTestingRecords?: number;
       };
 
-      if (connectionInfo.isConnected) {
+      if (isConnected) {
         try {
           // Get counts for various tables
-          const [userCount, ticketCount] = await Promise.all([
-            this.prismaService.public_users.count(),
-            this.prismaService.tickets.count(),
-            // this.prismaService.testing.count(), // Will be enabled after prisma generate
+          const [userCountResult, ticketCountResult] = await Promise.all([
+            this.supabaseService.getClient().from('users').select('*', { count: 'exact', head: true }),
+            this.supabaseService.getClient().from('tickets').select('*', { count: 'exact', head: true }),
           ]);
 
           databaseHealth = {
-            ...connectionInfo,
-            totalUsers: userCount,
-            totalTickets: ticketCount,
-            totalTestingRecords: 0, // Will be updated after prisma generate
+            isConnected: true,
+            databaseName: 'supabase',
+            version: '1.0.0',
+            totalUsers: userCountResult.count || 0,
+            totalTickets: ticketCountResult.count || 0,
+            totalTestingRecords: 0,
           };
         } catch (countError) {
           databaseHealth = {
-            ...connectionInfo,
+            isConnected: true,
+            databaseName: 'supabase',
+            version: '1.0.0',
             error: `Connected but failed to get counts: ${countError instanceof Error ? countError.message : 'Unknown error'}`,
           };
         }
       } else {
-        databaseHealth = connectionInfo;
+        databaseHealth = {
+          isConnected: false,
+          error: connectionError?.message || 'Database connection failed',
+        };
       }
 
       const message = databaseHealth.isConnected 
@@ -171,7 +183,22 @@ export class HealthController {
   })
   async getDatabaseStats() {
     try {
-      const stats = await this.prismaService.getDatabaseStats();
+      // Get counts for various tables
+      const [userCountResult, ticketCountResult] = await Promise.all([
+        this.supabaseService.getClient().from('users').select('*', { count: 'exact', head: true }),
+        this.supabaseService.getClient().from('tickets').select('*', { count: 'exact', head: true }),
+      ]);
+
+      const stats = {
+        totalTables: 4, // Hardcoded based on known tables: users, tickets, user_skills, ticket_skills
+        totalUsers: userCountResult.count || 0,
+        totalTickets: ticketCountResult.count || 0,
+        connectionInfo: {
+          isConnected: true,
+          databaseName: 'supabase',
+          version: '1.0.0',
+        },
+      };
       
       return ApiResponseHelper.success(
         stats,

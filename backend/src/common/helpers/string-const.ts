@@ -14,6 +14,9 @@ export enum ENV {
   SMTP_PORT = 'MAILTRAP_SMTP_PORT',
   SMTP_USER = 'MAILTRAP_SMTP_USER',
   SMTP_PASS = 'MAILTRAP_SMTP_PASS',
+  // Database Environment Variables
+  DATABASE_URL = 'DATABASE_URL',
+  DIRECT_URL = 'DIRECT_URL',
   // Add more environment variable keys as needed
 }
 
