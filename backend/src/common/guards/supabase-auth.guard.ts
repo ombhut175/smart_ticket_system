@@ -6,7 +6,13 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { SupabaseService } from '../../core/database/supabase.client';
-import { MESSAGES, COOKIES, TABLES, TABLE_COLUMNS, QUERY_SELECTORS } from '../helpers/string-const';
+import {
+  MESSAGES,
+  COOKIES,
+  TABLES,
+  TABLE_COLUMNS,
+  QUERY_SELECTORS,
+} from '../helpers/string-const';
 import { CookieHelper } from '../helpers/cookie.helper';
 
 /**
@@ -30,17 +36,18 @@ export class SupabaseAuthGuard implements CanActivate {
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    
+
     /**
      * Token extraction priority:
      * 1. HTTP-only cookie (preferred for web applications)
      * 2. Authorization header Bearer token (for API clients)
-     * 
+     *
      * Cookie approach is more secure as it prevents XSS token theft
      * Header approach allows API clients and mobile apps to authenticate
      */
-    const token = CookieHelper.getAuthToken(request.cookies) || 
-                  request.headers['authorization']?.toString().replace('Bearer ', '');
+    const token =
+      CookieHelper.getAuthToken(request.cookies) ||
+      request.headers['authorization']?.toString().replace('Bearer ', '');
 
     if (!token) {
       throw new UnauthorizedException(MESSAGES.MISSING_AUTH_TOKEN);
@@ -96,7 +103,7 @@ export class SupabaseAuthGuard implements CanActivate {
       // Ensure we use the role from public.users table, not auth.users
       [TABLE_COLUMNS.ROLE]: userProfile[TABLE_COLUMNS.ROLE],
     };
-    
+
     return true;
   }
-} 
+}

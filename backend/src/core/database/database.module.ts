@@ -5,4 +5,4 @@ import { SupabaseService } from './supabase.client';
   providers: [SupabaseService],
   exports: [SupabaseService],
 })
-export class DatabaseModule {} 
+export class DatabaseModule {}

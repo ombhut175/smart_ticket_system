@@ -1,21 +1,26 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { SupabaseService } from '../../core/database/supabase.client';
 import { InngestService } from '../../background/inngest.service';
 import { Ticket } from './interfaces/ticket.interface';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { TicketQueryDto } from './dto/ticket-query.dto';
-import { 
-  TABLES, 
-  TICKET_STATUS, 
-  INNGEST_EVENTS, 
-  TICKET_DEFAULTS, 
+import {
+  TABLES,
+  TICKET_STATUS,
+  INNGEST_EVENTS,
+  TICKET_DEFAULTS,
   USER_ROLES,
   QUERY_SELECTORS,
   TABLE_COLUMNS,
   MESSAGES,
   LOG_MESSAGES,
-  interpolateMessage
+  interpolateMessage,
 } from '../../common/helpers/string-const';
 
 @Injectable()
@@ -29,13 +34,18 @@ export class TicketsService {
 
   //#region ==================== TICKET CREATION ====================
 
-  async create(createTicketDto: CreateTicketDto, userId: string): Promise<Ticket> {
+  async create(
+    createTicketDto: CreateTicketDto,
+    userId: string,
+  ): Promise<Ticket> {
     // Log ticket creation start
-    this.logger.log(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_STARTED, { 
-      userId, 
-      title: createTicketDto.title 
-    }));
-    
+    this.logger.log(
+      interpolateMessage(LOG_MESSAGES.TICKET_CREATE_STARTED, {
+        userId,
+        title: createTicketDto.title,
+      }),
+    );
+
     try {
       // Insert ticket into database
       const { data: ticket, error } = await this.supabaseService
@@ -52,12 +62,17 @@ export class TicketsService {
         .single();
 
       if (error) {
-        this.logger.error(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }), error);
+        this.logger.error(
+          interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }),
+          error,
+        );
         throw new BadRequestException(error.message);
       }
 
       // Emit event for AI processing (following project helper)
-      this.logger.log(`📤 Sending Inngest event for ticket: ${ticket[TABLE_COLUMNS.ID]}`);
+      this.logger.log(
+        `📤 Sending Inngest event for ticket: ${ticket[TABLE_COLUMNS.ID]}`,
+      );
       await this.inngestService.sendEvent({
         name: INNGEST_EVENTS.TICKET_CREATED,
         data: {
@@ -69,13 +84,18 @@ export class TicketsService {
       });
 
       // Log successful ticket creation
-      this.logger.log(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_SUCCESS, { 
-        ticketId: ticket[TABLE_COLUMNS.ID] 
-      }));
-      
+      this.logger.log(
+        interpolateMessage(LOG_MESSAGES.TICKET_CREATE_SUCCESS, {
+          ticketId: ticket[TABLE_COLUMNS.ID],
+        }),
+      );
+
       return ticket;
     } catch (error) {
-      this.logger.error(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }), error);
+      this.logger.error(
+        interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }),
+        error,
+      );
       throw error;
     }
   }
@@ -84,7 +104,15 @@ export class TicketsService {
 
   //#region ==================== TICKET RETRIEVAL ====================
 
-  async findAllByUser(userId: string, query?: TicketQueryDto): Promise<{ tickets: Ticket[], total: number, page: number, limit: number }> {
+  async findAllByUser(
+    userId: string,
+    query?: TicketQueryDto,
+  ): Promise<{
+    tickets: Ticket[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const page = query?.page || 1;
     const limit = query?.limit || TICKET_DEFAULTS.PAGE_SIZE;
     const offset = (page - 1) * limit;
@@ -115,7 +143,15 @@ export class TicketsService {
     };
   }
 
-  async findAllForModerator(userRole: string, query?: TicketQueryDto): Promise<{ tickets: Ticket[], total: number, page: number, limit: number }> {
+  async findAllForModerator(
+    userRole: string,
+    query?: TicketQueryDto,
+  ): Promise<{
+    tickets: Ticket[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const page = query?.page || 1;
     const limit = query?.limit || TICKET_DEFAULTS.PAGE_SIZE;
     const offset = (page - 1) * limit;
@@ -128,8 +164,10 @@ export class TicketsService {
       .range(offset, offset + limit - 1);
 
     if (query?.status) queryBuilder.eq(TABLE_COLUMNS.STATUS, query.status);
-    if (query?.priority) queryBuilder.eq(TABLE_COLUMNS.PRIORITY, query.priority);
-    if (query?.assigned_to) queryBuilder.eq(TABLE_COLUMNS.ASSIGNED_TO, query.assigned_to);
+    if (query?.priority)
+      queryBuilder.eq(TABLE_COLUMNS.PRIORITY, query.priority);
+    if (query?.assigned_to)
+      queryBuilder.eq(TABLE_COLUMNS.ASSIGNED_TO, query.assigned_to);
 
     const { data, error, count } = await queryBuilder;
     if (error) throw new BadRequestException(error.message);
@@ -175,7 +213,11 @@ export class TicketsService {
 
   //#region ==================== TICKET UPDATES ====================
 
-  async updateTicket(id: string, updateDto: UpdateTicketDto, user: any): Promise<Ticket> {
+  async updateTicket(
+    id: string,
+    updateDto: UpdateTicketDto,
+    user: any,
+  ): Promise<Ticket> {
     const { data, error } = await this.supabaseService
       .getClient()
       .from(TABLES.TICKETS)
@@ -199,12 +241,13 @@ export class TicketsService {
 
   async deleteTicket(id: string, user: any): Promise<void> {
     // First check if ticket exists
-    const { data: existingTicket, error: findError } = await this.supabaseService
-      .getClient()
-      .from(TABLES.TICKETS)
-      .select(TABLE_COLUMNS.ID)
-      .eq(TABLE_COLUMNS.ID, id)
-      .single();
+    const { data: existingTicket, error: findError } =
+      await this.supabaseService
+        .getClient()
+        .from(TABLES.TICKETS)
+        .select(TABLE_COLUMNS.ID)
+        .eq(TABLE_COLUMNS.ID, id)
+        .single();
 
     if (findError || !existingTicket) {
       throw new NotFoundException(MESSAGES.TICKET_NOT_FOUND);
@@ -222,8 +265,13 @@ export class TicketsService {
       throw new BadRequestException(MESSAGES.TICKET_DELETE_FAILED);
     }
 
-    this.logger.log(interpolateMessage(MESSAGES.TICKET_DELETED_SUCCESS, { id, userId: user.id }));
+    this.logger.log(
+      interpolateMessage(MESSAGES.TICKET_DELETED_SUCCESS, {
+        id,
+        userId: user.id,
+      }),
+    );
   }
 
   //#endregion
-} 
+}

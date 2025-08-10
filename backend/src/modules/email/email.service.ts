@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { ENV, EMAIL_CONFIG, MESSAGES, interpolateMessage } from '../../common/helpers/string-const';
+import {
+  ENV,
+  EMAIL_CONFIG,
+  MESSAGES,
+  interpolateMessage,
+} from '../../common/helpers/string-const';
 
 @Injectable()
 export class EmailService {
@@ -11,7 +16,9 @@ export class EmailService {
   constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>(ENV.SMTP_HOST),
-      port: this.configService.get<number>(ENV.SMTP_PORT) || EMAIL_CONFIG.DEFAULT_PORT,
+      port:
+        this.configService.get<number>(ENV.SMTP_PORT) ||
+        EMAIL_CONFIG.DEFAULT_PORT,
       secure: false,
       auth: {
         user: this.configService.get<string>(ENV.SMTP_USER),
@@ -36,14 +43,16 @@ export class EmailService {
 <p><strong>Ticket ID:</strong> ${ticketId}</p>
 <p>Please review and take appropriate action.</p>`,
       });
-      this.logger.log(interpolateMessage(MESSAGES.EMAIL_SENT_SUCCESS, { 
-        email: moderatorEmail, 
-        ticketId 
-      }));
+      this.logger.log(
+        interpolateMessage(MESSAGES.EMAIL_SENT_SUCCESS, {
+          email: moderatorEmail,
+          ticketId,
+        }),
+      );
       return true;
     } catch (error) {
       this.logger.error(MESSAGES.EMAIL_SEND_FAILED, error as any);
       return false;
     }
   }
-} 
+}

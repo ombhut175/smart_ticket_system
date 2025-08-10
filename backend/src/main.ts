@@ -5,11 +5,11 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { 
-  APP_CONFIG, 
-  URL_PATTERNS, 
+import {
+  APP_CONFIG,
+  URL_PATTERNS,
   ENV,
-  interpolateMessage 
+  interpolateMessage,
 } from './common/helpers/string-const';
 
 // Helper to get required env variable or throw error
@@ -23,7 +23,7 @@ function getRequiredEnv(key: string): string {
 
 async function bootstrap() {
   // const logger = new Logger('Bootstrap');
-  
+
   try {
     const app = await NestFactory.create(AppModule);
 
@@ -65,17 +65,18 @@ async function bootstrap() {
 
     // Start server
     await app.listen(port);
-    
+
     // Generate URLs
-    const baseUrl = isProduction 
-      ? URL_PATTERNS.PRODUCTION_BASE 
-      : interpolateMessage(URL_PATTERNS.LOCALHOST_HTTP, { port: port.toString() });
+    const baseUrl = isProduction
+      ? URL_PATTERNS.PRODUCTION_BASE
+      : interpolateMessage(URL_PATTERNS.LOCALHOST_HTTP, {
+          port: port.toString(),
+        });
     const swaggerUrl = `${baseUrl}/${APP_CONFIG.SWAGGER_PATH}`;
-    
+
     // Simple startup logs
     console.log(`Application is running on: ${baseUrl}`);
     console.log(`Swagger documentation: ${swaggerUrl}`);
-    
   } catch (error) {
     console.error('❌ Failed to start the application:', error);
     process.exit(1);

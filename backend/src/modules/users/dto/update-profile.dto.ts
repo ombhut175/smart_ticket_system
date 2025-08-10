@@ -13,4 +13,4 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(100)
   last_name?: string;
-} 
+}

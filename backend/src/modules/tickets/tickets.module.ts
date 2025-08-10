@@ -15,4 +15,4 @@ import { DatabaseModule } from '../../core/database/database.module';
   providers: [TicketsService],
   exports: [TicketsService],
 })
-export class TicketsModule {} 
+export class TicketsModule {}

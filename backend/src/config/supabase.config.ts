@@ -46,4 +46,4 @@ export const supabaseConfig = (): SupabaseConfig => ({
   smtpPort: +(process.env[ENV.SMTP_PORT] || 587),
   smtpUser: process.env[ENV.SMTP_USER] as string,
   smtpPass: process.env[ENV.SMTP_PASS] as string,
-}); 
+});

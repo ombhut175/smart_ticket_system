@@ -9,9 +9,11 @@ jest.mock('@google/generative-ai', () => {
       getGenerativeModel: jest.fn().mockReturnValue({
         generateContent: jest.fn().mockResolvedValue({
           response: {
-            text: jest.fn().mockReturnValue(
-              '{"summary":"Short summary","priority":"high","helpfulNotes":"Some notes","relatedSkills":["React"]}'
-            ),
+            text: jest
+              .fn()
+              .mockReturnValue(
+                '{"summary":"Short summary","priority":"high","helpfulNotes":"Some notes","relatedSkills":["React"]}',
+              ),
           },
         }),
       }),
@@ -62,4 +64,4 @@ describe('AiService', () => {
     const res = await failingService.analyzeTicket('Title', 'Desc');
     expect(res).toBeNull();
   });
-}); 
+});

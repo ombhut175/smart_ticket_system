@@ -7,7 +7,7 @@ export class AddUserSkillDto {
     description: 'Name of the skill to add to the user',
     example: 'JavaScript',
     maxLength: 100,
-    type: 'string'
+    type: 'string',
   })
   @IsString()
   @MaxLength(100)
@@ -17,8 +17,8 @@ export class AddUserSkillDto {
     description: 'Proficiency level of the user in this skill',
     example: 'advanced',
     enum: SKILL_PROFICIENCY,
-    enumName: 'SkillProficiency'
+    enumName: 'SkillProficiency',
   })
   @IsEnum(SKILL_PROFICIENCY)
   proficiency_level: SKILL_PROFICIENCY;
-} 
+}

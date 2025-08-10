@@ -41,4 +41,4 @@ export class CookieHelper {
   static getAuthToken(cookies: any): string | undefined {
     return cookies?.[COOKIES.SUPABASE_TOKEN];
   }
-} 
+}

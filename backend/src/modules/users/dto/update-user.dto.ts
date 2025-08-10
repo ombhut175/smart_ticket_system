@@ -10,4 +10,4 @@ export class UpdateUserDto {
   @IsString()
   @MaxLength(100)
   last_name?: string;
-} 
+}

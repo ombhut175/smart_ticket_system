@@ -8,4 +8,4 @@ import { SupabaseService } from '../../core/database/supabase.client';
   providers: [AuthService, SupabaseService],
   exports: [SupabaseService, AuthService],
 })
-export class AuthModule {} 
+export class AuthModule {}

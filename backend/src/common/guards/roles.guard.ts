@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { USER_ROLES, MESSAGES, TABLE_COLUMNS } from '../helpers/string-const';
@@ -16,10 +21,10 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     // Retrieve roles defined on route handler or controller
-    const requiredRoles = this.reflector.getAllAndOverride<USER_ROLES[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<USER_ROLES[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     // If no roles are required, allow access
     if (!requiredRoles || requiredRoles.length === 0) {
@@ -43,10 +48,10 @@ export class RolesGuard implements CanActivate {
     const hasRole = requiredRoles.some((role) => userRole === role);
     if (!hasRole) {
       throw new ForbiddenException(
-        `Access denied. Required roles: [${requiredRoles.join(', ')}], User role: ${userRole}`
+        `Access denied. Required roles: [${requiredRoles.join(', ')}], User role: ${userRole}`,
       );
     }
 
     return true;
   }
-} 
+}

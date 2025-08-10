@@ -29,7 +29,10 @@ export class ApiResponseHelper {
    * @param message - Optional success message, defaults to 'Success'
    * @returns Standardized success response
    */
-  static success<T>(data?: T, message: string = MESSAGES.SUCCESS): ApiResponse<T> {
+  static success<T>(
+    data?: T,
+    message: string = MESSAGES.SUCCESS,
+  ): ApiResponse<T> {
     return {
       success: true,
       statusCode: 200,
@@ -45,7 +48,10 @@ export class ApiResponseHelper {
    * @param message - Optional creation message, defaults to 'Created'
    * @returns Standardized creation response
    */
-  static created<T>(data?: T, message: string = MESSAGES.CREATED): ApiResponse<T> {
+  static created<T>(
+    data?: T,
+    message: string = MESSAGES.CREATED,
+  ): ApiResponse<T> {
     return {
       success: true,
       statusCode: 201,
@@ -96,4 +102,4 @@ export class ApiResponseHelper {
       timestamp: new Date().toISOString(),
     };
   }
-} 
+}

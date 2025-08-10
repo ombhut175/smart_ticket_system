@@ -14,4 +14,4 @@ export interface User {
   last_login_at?: string | Date;
   created_at: string | Date;
   updated_at: string | Date;
-} 
+}

@@ -9,7 +9,8 @@ export class InngestService {
   private client: Inngest;
 
   constructor(private readonly configService: ConfigService) {
-    const nodeEnv = this.configService.get<string>(ENV.NODE_ENV) || 'development';
+    const nodeEnv =
+      this.configService.get<string>(ENV.NODE_ENV) || 'development';
     const isDevelopment = nodeEnv === 'development';
 
     if (isDevelopment) {
@@ -38,4 +39,4 @@ export class InngestService {
   async sendEvent(event: { name: string; data: any }) {
     return this.client.send(event);
   }
-} 
+}

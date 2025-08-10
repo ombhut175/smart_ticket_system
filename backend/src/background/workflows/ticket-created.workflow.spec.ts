@@ -23,4 +23,4 @@ describe('ticket-created workflow', () => {
     expect(createFunctionMock).toHaveBeenCalled();
     // workflow should equal whatever createFunction returned – simulate value
   });
-}); 
+});

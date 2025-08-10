@@ -39,4 +39,4 @@ export const testConfig = (): TestConfig => ({
   smtpPort: +(process.env[ENV.SMTP_PORT] || 587),
   smtpUser: process.env[ENV.SMTP_USER] || 'test@example.com',
   smtpPass: process.env[ENV.SMTP_PASS] || 'password',
-}); 
+});

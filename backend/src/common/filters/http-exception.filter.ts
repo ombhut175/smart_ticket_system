@@ -31,13 +31,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    
+
     /**
      * Extract status code from exception or default to 500 Internal Server Error
      * Supabase and validation errors typically throw with appropriate status codes
      */
-    const status = exception.getStatus ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-    
+    const status = exception.getStatus
+      ? exception.getStatus()
+      : HttpStatus.INTERNAL_SERVER_ERROR;
+
     /**
      * Extract error message with fallback handling:
      * 1. Use exception message if available
@@ -46,12 +48,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
      */
     const exceptionResponse = exception.getResponse();
     let message = exception.message || MESSAGES.INTERNAL_SERVER_ERROR;
-    
+
     // Handle nested error response objects (common with validation errors)
     if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
       const responseObj = exceptionResponse as any;
       message = responseObj.message || responseObj.error || message;
-      
+
       // Handle array of validation messages
       if (Array.isArray(responseObj.message)) {
         message = responseObj.message.join(', ');
@@ -84,10 +86,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
      */
     this.logger.error(
       `HTTP ${status} Error on ${request.method} ${request.url}: ${message}`,
-      process.env.NODE_ENV === 'development' ? exception.stack : ''
+      process.env.NODE_ENV === 'development' ? exception.stack : '',
     );
 
     // Send standardized error response to client
     response.status(status).json(errorResponse);
   }
-} 
+}
