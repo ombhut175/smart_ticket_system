@@ -1,7 +1,7 @@
 # Smart Ticket System API Documentation
 
 **Version:** 1.0  
-**Base URL:** `http://localhost:3000/api`  
+**Base URL:** `http://localhost:8080/api`  
 **Authentication:** Cookie-based (HTTP-only cookie with JWT token)  
 
 ## Table of Contents
@@ -12,6 +12,7 @@
 4. [Common Data Types](#common-data-types)
 5. [Error Responses](#error-responses)
 6. [Response Format](#response-format)
+7. [Authentication & Headers](#authentication--headers)
 
 ---
 
@@ -20,6 +21,10 @@
 **Base Path:** `/api/auth`
 
 All authentication endpoints return standardized responses and handle user session management through HTTP-only cookies.
+
+Notes:
+- Content-Type for JSON requests: `application/json`
+- Auth methods supported on protected routes: HTTP-only cookie (`supabaseToken`) or `Authorization: Bearer <token>` header.
 
 ### 1. Register New User
 
@@ -685,7 +690,7 @@ None required.
   page?: number;        // Page number (starts from 1), default: 1
   limit?: number;       // Items per page (1-100), default: 20
   status?: "todo" | "in_progress" | "waiting_for_customer" | "resolved" | "closed" | "cancelled";
-  priority?: "low" | "medium" | "high";
+  priority?: "low" | "medium" | "high"; // Note: responses may contain "urgent" priority set by AI; filtering by "urgent" is not currently supported
   assigned_to?: string; // UUID of assigned user (moderator/admin view only)
 }
 ```
@@ -962,7 +967,7 @@ interface Ticket {
   title: string;                 // 5-200 characters
   description: string;           // 10-5000 characters
   status: "todo" | "in_progress" | "waiting_for_customer" | "resolved" | "closed" | "cancelled";
-  priority: "low" | "medium" | "high";
+  priority: "low" | "medium" | "high" | "urgent"; // "urgent" can be assigned by AI analysis
   created_by: string;            // UUID of creator
   assigned_to?: string;          // UUID of assigned moderator
   summary?: string;              // AI-generated summary
@@ -1104,7 +1109,7 @@ interface ErrorResponse {
 
 ---
 
-## Authentication & Authorization
+## Authentication & Headers
 
 ### Cookie-Based Authentication
 
@@ -1115,7 +1120,16 @@ The system uses HTTP-only cookies for authentication:
 - **Security**: HTTP-only, secure in production
 - **Usage**: Automatically sent with requests
 
-### Role-Based Access Control
+### Authorization Header Alternative
+
+- You may alternatively send the JWT as an `Authorization` header: `Authorization: Bearer <token>`
+- Both cookie and header are supported by the server guard; cookies are preferred for browsers due to XSS protection
+
+### Required Headers
+
+- `Content-Type: application/json` for all requests with bodies
+
+### Authorization & Roles
 
 #### User Roles
 
