@@ -4,13 +4,17 @@ import {
   LOG_MESSAGES,
   interpolateMessage,
 } from '../../common/helpers/string-const';
-import { DatabaseRepository } from '../../core/database/database.repository';
+import { UsersRepository } from '../../core/database/repositories/users.repository';
+import { TicketsRepository } from '../../core/database/repositories/tickets.repository';
 
 @Injectable()
 export class AssignmentService {
   private readonly logger = new Logger(AssignmentService.name);
 
-  constructor(private readonly dbRepo: DatabaseRepository) {}
+  constructor(
+    private readonly usersRepo: UsersRepository,
+    private readonly ticketsRepo: TicketsRepository,
+  ) {}
 
   /**
    * Tries to find a moderator with matching skills. Falls back to any active admin.
@@ -37,7 +41,7 @@ export class AssignmentService {
 
       // If no skilled moderator found, fall back to any active admin using Drizzle
       if (!assignedUser) {
-        const admin = await this.dbRepo.findSingleActiveAdmin();
+        const admin = await this.usersRepo.findSingleActiveAdmin();
         if (admin) {
           assignedUser = admin;
         }
@@ -45,7 +49,7 @@ export class AssignmentService {
 
       // Update ticket assignment via Drizzle
       if (assignedUser) {
-        await this.dbRepo.updateTicket(ticketId, {
+        await this.ticketsRepo.updateTicket(ticketId, {
           assignedTo: assignedUser.id,
         } as any);
 
@@ -83,7 +87,7 @@ export class AssignmentService {
   ): Promise<{ id: string; email: string } | null> {
     try {
       // Get all active users with the specified role and their skills via Drizzle
-      const rows = await this.dbRepo.findActiveUsersWithSkillsByRole(role);
+      const rows = await this.usersRepo.findActiveUsersWithSkillsByRole(role);
       if (!rows || rows.length === 0) {
         return null;
       }

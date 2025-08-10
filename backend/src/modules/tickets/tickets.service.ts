@@ -5,20 +5,18 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { DatabaseRepository } from '../../core/database/database.repository';
+import { TicketsRepository } from '../../core/database/repositories/tickets.repository';
+import { UsersRepository } from '../../core/database/repositories/users.repository';
 import { InngestService } from '../../background/inngest.service';
 import { Ticket } from './interfaces/ticket.interface';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { TicketQueryDto } from './dto/ticket-query.dto';
 import {
-  TABLES,
   TICKET_STATUS,
   INNGEST_EVENTS,
   TICKET_DEFAULTS,
   USER_ROLES,
-  QUERY_SELECTORS,
-  TABLE_COLUMNS,
   MESSAGES,
   LOG_MESSAGES,
   interpolateMessage,
@@ -29,7 +27,8 @@ export class TicketsService {
   private readonly logger = new Logger(TicketsService.name);
 
   constructor(
-    private dbRepo: DatabaseRepository,
+    private readonly ticketsRepo: TicketsRepository,
+    private readonly usersRepo: UsersRepository,
     private inngestService: InngestService,
   ) {}
 
@@ -49,7 +48,7 @@ export class TicketsService {
 
     try {
       // Insert ticket into database using Drizzle
-      const ticket = await this.dbRepo.createTicketCompat(
+      const ticket = await this.ticketsRepo.createTicketCompat(
         createTicketDto.title,
         createTicketDto.description,
         userId,
@@ -110,7 +109,7 @@ export class TicketsService {
     const limit = query?.limit || TICKET_DEFAULTS.PAGE_SIZE;
     const offset = (page - 1) * limit;
 
-    const { tickets, total } = await this.dbRepo.findTicketsByUserWithFilters(
+    const { tickets, total } = await this.ticketsRepo.findTicketsByUserWithFilters(
       userId,
       limit,
       offset,
@@ -147,7 +146,7 @@ export class TicketsService {
     const limit = query?.limit || TICKET_DEFAULTS.PAGE_SIZE;
     const offset = (page - 1) * limit;
 
-    const { tickets, total } = await this.dbRepo.findAllTicketsWithFilters(
+    const { tickets, total } = await this.ticketsRepo.findAllTicketsWithFilters(
       limit,
       offset,
       {
@@ -165,7 +164,7 @@ export class TicketsService {
         ),
       ),
     );
-    const users = await this.dbRepo.findUsersByIds(userIds);
+    const users = await this.usersRepo.findUsersByIds(userIds);
     const idToEmail = new Map(users.map((u) => [u.id, u.email] as const));
 
     const mapped = tickets.map((t: any) => ({
@@ -188,7 +187,7 @@ export class TicketsService {
   }
 
   async findById(id: string, user: any): Promise<Ticket> {
-    const ticket = await this.dbRepo.findTicketById(id);
+    const ticket = await this.ticketsRepo.findTicketById(id);
     if (!ticket) throw new NotFoundException(MESSAGES.TICKET_NOT_FOUND);
 
     if (user.role === USER_ROLES.USER && ticket.createdBy !== user.id) {
@@ -209,7 +208,7 @@ export class TicketsService {
       const ids = [ticket.createdBy, ticket.assignedTo].filter(
         Boolean,
       ) as string[];
-      const users = await this.dbRepo.findUsersByIds(ids);
+      const users = await this.usersRepo.findUsersByIds(ids);
       const idToEmail = new Map(users.map((u) => [u.id, u.email] as const));
       mapped.assignee = ticket.assignedTo
         ? { email: idToEmail.get(ticket.assignedTo!) || null }
@@ -237,7 +236,7 @@ export class TicketsService {
     if (updateDto.helpful_notes !== undefined)
       updateData.helpfulNotes = updateDto.helpful_notes;
 
-    const ticket = await this.dbRepo.updateTicket(id, updateData);
+    const ticket = await this.ticketsRepo.updateTicket(id, updateData);
 
     if (!ticket) {
       throw new NotFoundException(MESSAGES.TICKET_UPDATE_FAILED);
@@ -261,14 +260,14 @@ export class TicketsService {
 
   async deleteTicket(id: string, user: any): Promise<void> {
     // First check if ticket exists
-    const existingTicket = await this.dbRepo.findTicketById(id);
+    const existingTicket = await this.ticketsRepo.findTicketById(id);
 
     if (!existingTicket) {
       throw new NotFoundException(MESSAGES.TICKET_NOT_FOUND);
     }
 
     // Delete the ticket
-    const deleted = await this.dbRepo.deleteTicket(id);
+    const deleted = await this.ticketsRepo.deleteTicket(id);
 
     if (!deleted) {
       this.logger.error(`Failed to delete ticket ${id}`);
