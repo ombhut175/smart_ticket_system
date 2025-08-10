@@ -5,7 +5,7 @@ export class InsertTestingDto {
   @ApiProperty({
     description: 'Name of the testing record',
     example: 'Test Record',
-    maxLength: 100
+    maxLength: 100,
   })
   @IsString()
   @IsNotEmpty()
@@ -15,7 +15,7 @@ export class InsertTestingDto {
   @ApiProperty({
     description: 'Description of the testing record',
     example: 'This is a test record for testing purposes',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -26,7 +26,7 @@ export class InsertTestingDto {
     example: 'general',
     default: 'general',
     maxLength: 50,
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()

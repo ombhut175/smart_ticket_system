@@ -1,13 +1,18 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { DatabaseRepository } from '../../core/database/database.repository';
-import { 
-  MESSAGES, 
+import {
+  MESSAGES,
   USER_ROLES,
   LOG_MESSAGES,
   interpolateMessage,
   TABLE_COLUMNS,
   TABLES,
-  QUERY_SELECTORS 
+  QUERY_SELECTORS,
 } from '../../common/helpers/string-const';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AddUserSkillDto } from './dto/add-user-skill.dto';
@@ -16,9 +21,7 @@ import { AddUserSkillDto } from './dto/add-user-skill.dto';
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(
-    private readonly dbRepo: DatabaseRepository,
-  ) {}
+  constructor(private readonly dbRepo: DatabaseRepository) {}
 
   async getProfile(userId: string) {
     // Log profile fetch start
@@ -78,7 +81,11 @@ export class UsersService {
       const data = await this.dbRepo.updateUserProfile(userId, dto);
 
       if (!data) {
-        this.logger.error(interpolateMessage(LOG_MESSAGES.USER_PROFILE_UPDATE_FAILED, { userId }));
+        this.logger.error(
+          interpolateMessage(LOG_MESSAGES.USER_PROFILE_UPDATE_FAILED, {
+            userId,
+          }),
+        );
         throw new BadRequestException('Failed to update profile');
       }
 
@@ -109,7 +116,11 @@ export class UsersService {
     );
 
     try {
-      const data = await this.dbRepo.addUserSkillCompat(id, dto.skill_name, dto.proficiency_level);
+      const data = await this.dbRepo.addUserSkillCompat(
+        id,
+        dto.skill_name,
+        dto.proficiency_level,
+      );
 
       // Log successful skill addition
       this.logger.log(
@@ -121,7 +132,10 @@ export class UsersService {
 
       return data;
     } catch (error) {
-      this.logger.error(`Failed to add skill ${dto.skill_name} for user: ${id}`, error);
+      this.logger.error(
+        `Failed to add skill ${dto.skill_name} for user: ${id}`,
+        error,
+      );
       throw new BadRequestException(error.message || 'Failed to add skill');
     }
   }
@@ -167,10 +181,12 @@ export class UsersService {
         this.logger.error(`Failed to toggle active status for user: ${id}`);
         throw new BadRequestException('Failed to update user');
       }
-      this.logger.log(interpolateMessage(LOG_MESSAGES.USER_TOGGLE_ACTIVE_SUCCESS, { 
-        userId: id, 
-        isActive: isActive.toString() 
-      }));
+      this.logger.log(
+        interpolateMessage(LOG_MESSAGES.USER_TOGGLE_ACTIVE_SUCCESS, {
+          userId: id,
+          isActive: isActive.toString(),
+        }),
+      );
       return data;
     } catch (error) {
       this.logger.error(
@@ -202,10 +218,12 @@ export class UsersService {
         this.logger.error(`Failed to update role for user: ${id} to ${role}`);
         throw new BadRequestException('Failed to update user');
       }
-      this.logger.log(interpolateMessage(LOG_MESSAGES.USER_ROLE_UPDATE_SUCCESS, { 
-        userId: id, 
-        role: role 
-      }));
+      this.logger.log(
+        interpolateMessage(LOG_MESSAGES.USER_ROLE_UPDATE_SUCCESS, {
+          userId: id,
+          role: role,
+        }),
+      );
       return data;
     } catch (error) {
       this.logger.error(

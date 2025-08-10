@@ -17,7 +17,7 @@ export class TestingService {
   async checkTestingTable() {
     try {
       const client = this.drizzleService.getClient();
-      
+
       // Check if table exists
       const tableExists = await client`
         SELECT EXISTS (
@@ -26,7 +26,7 @@ export class TestingService {
           AND table_name = 'testing'
         );
       `;
-      
+
       if (tableExists[0]?.exists) {
         // Get table structure
         const structure = await client`
@@ -35,16 +35,19 @@ export class TestingService {
           WHERE table_name = 'testing'
           ORDER BY ordinal_position;
         `;
-        
+
         return {
           exists: true,
-          structure: structure
+          structure: structure,
         };
       } else {
         return { exists: false, structure: [] };
       }
     } catch (error) {
-      this.logger.error(`Failed to check testing table: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to check testing table: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -58,25 +61,31 @@ export class TestingService {
       if (!data || typeof data !== 'object') {
         throw new Error('Invalid input data: data must be a valid object');
       }
-      
+
       // Check if required fields are present
       if (!data.name || typeof data.name !== 'string') {
-        throw new Error('Invalid input data: name field is required and must be a string');
+        throw new Error(
+          'Invalid input data: name field is required and must be a string',
+        );
       }
-      
+
       const db = this.drizzleService.getDb();
-      
-      this.logger.log(`Attempting to insert testing record: ${JSON.stringify(data)}`);
-      
-      const result = await db
-        .insert(testing)
-        .values(data)
-        .returning();
-      
-      this.logger.log(`Successfully inserted testing record with ID: ${result[0]?.id}`);
+
+      this.logger.log(
+        `Attempting to insert testing record: ${JSON.stringify(data)}`,
+      );
+
+      const result = await db.insert(testing).values(data).returning();
+
+      this.logger.log(
+        `Successfully inserted testing record with ID: ${result[0]?.id}`,
+      );
       return result[0];
     } catch (error) {
-      this.logger.error(`Failed to insert testing record: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to insert testing record: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -87,12 +96,15 @@ export class TestingService {
   async getAllTestingRecords() {
     try {
       const db = this.drizzleService.getDb();
-      
+
       const result = await db.select().from(testing);
       this.logger.log(`Retrieved ${result.length} testing records`);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to retrieve testing records: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to retrieve testing records: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -104,7 +116,7 @@ export class TestingService {
   async getUsersWithTickets() {
     try {
       const db = this.drizzleService.getDb();
-      
+
       const result = await db
         .select({
           userId: users.id,
@@ -121,11 +133,14 @@ export class TestingService {
         .from(users)
         .leftJoin(tickets, eq(users.id, tickets.createdBy))
         .orderBy(users.email, tickets.createdAt);
-      
+
       this.logger.log(`Retrieved ${result.length} users with tickets`);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to retrieve users with tickets: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to retrieve users with tickets: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -137,7 +152,7 @@ export class TestingService {
   async getTicketsWithAssignedUsers() {
     try {
       const db = this.drizzleService.getDb();
-      
+
       const result = await db
         .select({
           ticketId: tickets.id,
@@ -154,11 +169,14 @@ export class TestingService {
         .from(tickets)
         .leftJoin(users, eq(tickets.assignedTo, users.id))
         .orderBy(tickets.status, tickets.priority);
-      
+
       this.logger.log(`Retrieved ${result.length} tickets with assigned users`);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to retrieve tickets with assigned users: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to retrieve tickets with assigned users: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

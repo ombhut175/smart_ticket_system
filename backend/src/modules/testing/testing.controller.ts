@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Body, HttpStatus, HttpException, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpStatus,
+  HttpException,
+  Logger,
+} from '@nestjs/common';
 import { TestingService } from './testing.service';
 import { ApiResponseHelper } from '../../common/helpers/api-response.helper';
 import { InsertTestingDto } from './dto/insert-testing.dto';
@@ -16,15 +24,12 @@ export class TestingController {
   async checkTestingTable() {
     try {
       const result = await this.testingService.checkTestingTable();
-      
-      return ApiResponseHelper.success(
-        result,
-        'Testing table check completed'
-      );
+
+      return ApiResponseHelper.success(result, 'Testing table check completed');
     } catch (error) {
       throw new HttpException(
         'Failed to check testing table',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -35,23 +40,25 @@ export class TestingController {
   @Post('insert')
   async insertTestingRecord(@Body() data: InsertTestingDto) {
     try {
-      this.logger.log(`Received insert request with data: ${JSON.stringify(data)}`);
-      
+      this.logger.log(
+        `Received insert request with data: ${JSON.stringify(data)}`,
+      );
+
       const result = await this.testingService.insertTestingRecord(data);
-      
+
       return ApiResponseHelper.created(
         result,
-        'Testing record inserted successfully'
+        'Testing record inserted successfully',
       );
     } catch (error) {
       if (error instanceof HttpException) {
         throw error; // Re-throw HTTP exceptions as-is
       }
-      
+
       this.logger.error(`Insert error details: ${error.message}`, error.stack);
       throw new HttpException(
         `Failed to insert testing record: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -63,15 +70,15 @@ export class TestingController {
   async getAllTestingRecords() {
     try {
       const records = await this.testingService.getAllTestingRecords();
-      
+
       return ApiResponseHelper.success(
         records,
-        'Testing records retrieved successfully'
+        'Testing records retrieved successfully',
       );
     } catch (error) {
       throw new HttpException(
         'Failed to retrieve testing records',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -84,15 +91,15 @@ export class TestingController {
   async getUsersWithTickets() {
     try {
       const result = await this.testingService.getUsersWithTickets();
-      
+
       return ApiResponseHelper.success(
         result,
-        'Users with tickets retrieved successfully'
+        'Users with tickets retrieved successfully',
       );
     } catch (error) {
       throw new HttpException(
         'Failed to retrieve users with tickets',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -105,15 +112,15 @@ export class TestingController {
   async getTicketsWithAssignedUsers() {
     try {
       const result = await this.testingService.getTicketsWithAssignedUsers();
-      
+
       return ApiResponseHelper.success(
         result,
-        'Tickets with assigned users retrieved successfully'
+        'Tickets with assigned users retrieved successfully',
       );
     } catch (error) {
       throw new HttpException(
         'Failed to retrieve tickets with assigned users',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

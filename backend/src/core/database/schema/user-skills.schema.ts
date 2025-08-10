@@ -5,9 +5,13 @@ import { users } from './users.schema';
 
 export const userSkills = pgTable('user_skills', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
   skillName: varchar('skill_name', { length: 100 }).notNull(),
-  proficiencyLevel: varchar('proficiency_level', { length: 50 }).notNull().default('beginner'),
+  proficiencyLevel: varchar('proficiency_level', { length: 50 })
+    .notNull()
+    .default('beginner'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 

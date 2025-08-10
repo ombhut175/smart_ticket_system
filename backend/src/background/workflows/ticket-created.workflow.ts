@@ -21,32 +21,47 @@ export const createTicketCreatedWorkflow = (
   assignmentService: AssignmentService,
   emailService: EmailService,
 ) => {
-  return inngestService.getClient().createFunction(
-    { id: INNGEST_CONFIG.WORKFLOW_ID as string, retries: INNGEST_CONFIG.RETRIES },
-    { event: INNGEST_EVENTS.TICKET_CREATED as string },
-    async ({ event, step }) => {
-      try {
-        const { ticketId } = event.data as { ticketId: string };
-        console.log(`🎫 Processing ticket workflow for ID: ${ticketId}`);
-        
-        // Step 1: Fetch ticket
-        const ticket = await step.run(INNGEST_STEPS.FETCH_TICKET as string, async () => {
-          console.log(`📋 Fetching ticket with ID: ${ticketId}`);
-          const data = await dbRepo.findTicketById(ticketId);
-          if (!data) {
-            console.error(`❌ Ticket not found: ${ticketId}`);
-            throw new NonRetriableError(MESSAGES.TICKET_NOT_FOUND);
-          }
-          console.log(`✅ Ticket fetched successfully: ${data.title}`);
-          return data as any;
-        });
+  return inngestService
+    .getClient()
+    .createFunction(
+      {
+        id: INNGEST_CONFIG.WORKFLOW_ID as string,
+        retries: INNGEST_CONFIG.RETRIES,
+      },
+      { event: INNGEST_EVENTS.TICKET_CREATED as string },
+      async ({ event, step }) => {
+        try {
+          const { ticketId } = event.data as { ticketId: string };
+          console.log(`🎫 Processing ticket workflow for ID: ${ticketId}`);
 
-        // Step 2: mark status TODO (processing start)
-        await step.run(INNGEST_STEPS.UPDATE_TICKET_STATUS as string, async () => {
-          console.log(`🔄 Updating ticket status to TODO for: ${ticket.id}`);
-          await dbRepo.updateTicket(ticket.id, { status: TICKET_STATUS.TODO } as any);
-          console.log(`✅ Ticket status updated to TODO`);
-        });
+          // Step 1: Fetch ticket
+          const ticket = await step.run(
+            INNGEST_STEPS.FETCH_TICKET as string,
+            async () => {
+              console.log(`📋 Fetching ticket with ID: ${ticketId}`);
+              const data = await dbRepo.findTicketById(ticketId);
+              if (!data) {
+                console.error(`❌ Ticket not found: ${ticketId}`);
+                throw new NonRetriableError(MESSAGES.TICKET_NOT_FOUND);
+              }
+              console.log(`✅ Ticket fetched successfully: ${data.title}`);
+              return data as any;
+            },
+          );
+
+          // Step 2: mark status TODO (processing start)
+          await step.run(
+            INNGEST_STEPS.UPDATE_TICKET_STATUS as string,
+            async () => {
+              console.log(
+                `🔄 Updating ticket status to TODO for: ${ticket.id}`,
+              );
+              await dbRepo.updateTicket(ticket.id, {
+                status: TICKET_STATUS.TODO,
+              } as any);
+              console.log(`✅ Ticket status updated to TODO`);
+            },
+          );
 
           // Step 3: AI processing
           const relatedSkills = await step.run(
@@ -69,19 +84,20 @@ export const createTicketCreatedWorkflow = (
                   ? aiResponse.priority
                   : 'medium';
 
-            await dbRepo.updateTicket(ticket.id, {
-              priority: validPriority,
-              helpfulNotes: aiResponse.helpfulNotes,
-              summary: aiResponse.summary,
-              status: TICKET_STATUS.IN_PROGRESS,
-              relatedSkills: aiResponse.relatedSkills as any,
-            } as any);
-            console.log(`✅ Ticket updated with AI insights`);
-            return aiResponse.relatedSkills || [];
-          }
-          console.log(`⚠️ No AI response received`);
-          return [];
-        });
+                await dbRepo.updateTicket(ticket.id, {
+                  priority: validPriority,
+                  helpfulNotes: aiResponse.helpfulNotes,
+                  summary: aiResponse.summary,
+                  status: TICKET_STATUS.IN_PROGRESS,
+                  relatedSkills: aiResponse.relatedSkills as any,
+                } as any);
+                console.log(`✅ Ticket updated with AI insights`);
+                return aiResponse.relatedSkills || [];
+              }
+              console.log(`⚠️ No AI response received`);
+              return [];
+            },
+          );
 
           // Step 4: Assign moderator
           const moderator = await step.run(

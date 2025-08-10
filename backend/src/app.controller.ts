@@ -12,7 +12,10 @@ export class AppController {
   ) {}
 
   @Get('db-test')
-  @ApiOperation({ summary: 'Database test', description: 'Check database connectivity' })
+  @ApiOperation({
+    summary: 'Database test',
+    description: 'Check database connectivity',
+  })
   @ApiResponse({ status: 200, description: 'Database is connected.' })
   @ApiResponse({ status: 500, description: 'Database connection failed.' })
   async testDatabase() {

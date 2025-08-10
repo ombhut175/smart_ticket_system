@@ -1,4 +1,11 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  timestamp,
+  boolean,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { users } from './users.schema';
@@ -9,7 +16,9 @@ export const tickets = pgTable('tickets', {
   description: text('description').notNull(),
   status: varchar('status', { length: 50 }).notNull().default('todo'),
   priority: varchar('priority', { length: 50 }).notNull().default('medium'),
-  createdBy: uuid('created_by').notNull().references(() => users.id),
+  createdBy: uuid('created_by')
+    .notNull()
+    .references(() => users.id),
   assignedTo: uuid('assigned_to').references(() => users.id),
   summary: text('summary'),
   helpfulNotes: text('helpful_notes'),

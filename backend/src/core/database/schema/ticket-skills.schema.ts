@@ -5,7 +5,9 @@ import { tickets } from './tickets.schema';
 
 export const ticketSkills = pgTable('ticket_skills', {
   id: uuid('id').primaryKey().defaultRandom(),
-  ticketId: uuid('ticket_id').notNull().references(() => tickets.id),
+  ticketId: uuid('ticket_id')
+    .notNull()
+    .references(() => tickets.id),
   skillName: varchar('skill_name', { length: 100 }).notNull(),
   importance: varchar('importance', { length: 50 }).notNull().default('medium'),
   createdAt: timestamp('created_at').notNull().defaultNow(),

@@ -13,7 +13,7 @@ export class ExampleService {
    */
   async createUserWithTicket(
     userData: Omit<NewUser, 'id' | 'createdAt' | 'updatedAt'>,
-    ticketData: Omit<NewTicket, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>
+    ticketData: Omit<NewTicket, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>,
   ): Promise<{ user: User; ticket: Ticket }> {
     try {
       // Create user first
@@ -25,7 +25,9 @@ export class ExampleService {
         ...ticketData,
         createdBy: user.id,
       });
-      this.logger.log(`Created ticket: ${ticket.title} for user: ${user.email}`);
+      this.logger.log(
+        `Created ticket: ${ticket.title} for user: ${user.email}`,
+      );
 
       return { user, ticket };
     } catch (error) {
@@ -40,13 +42,15 @@ export class ExampleService {
   async findUsersBySkill(skillName: string): Promise<User[]> {
     try {
       const usersWithSkills = await this.dbRepo.findUsersWithSkills();
-      
+
       // Filter users who have the specific skill
       const usersWithSpecificSkill = usersWithSkills
-        .filter(item => item.skill && item.skill.skillName === skillName)
-        .map(item => item.user);
+        .filter((item) => item.skill && item.skill.skillName === skillName)
+        .map((item) => item.user);
 
-      this.logger.log(`Found ${usersWithSpecificSkill.length} users with skill: ${skillName}`);
+      this.logger.log(
+        `Found ${usersWithSpecificSkill.length} users with skill: ${skillName}`,
+      );
       return usersWithSpecificSkill;
     } catch (error) {
       this.logger.error(`Failed to find users by skill: ${error.message}`);
@@ -72,12 +76,16 @@ export class ExampleService {
       };
 
       // Count by status
-      tickets.forEach(ticket => {
-        stats.byStatus[ticket.status] = (stats.byStatus[ticket.status] || 0) + 1;
-        stats.byPriority[ticket.priority] = (stats.byPriority[ticket.priority] || 0) + 1;
+      tickets.forEach((ticket) => {
+        stats.byStatus[ticket.status] =
+          (stats.byStatus[ticket.status] || 0) + 1;
+        stats.byPriority[ticket.priority] =
+          (stats.byPriority[ticket.priority] || 0) + 1;
       });
 
-      this.logger.log(`Generated ticket statistics: ${stats.total} total tickets`);
+      this.logger.log(
+        `Generated ticket statistics: ${stats.total} total tickets`,
+      );
       return stats;
     } catch (error) {
       this.logger.error(`Failed to get ticket statistics: ${error.message}`);
@@ -88,7 +96,10 @@ export class ExampleService {
   /**
    * Example: Update ticket assignment with validation
    */
-  async assignTicketToUser(ticketId: string, userId: string): Promise<Ticket | null> {
+  async assignTicketToUser(
+    ticketId: string,
+    userId: string,
+  ): Promise<Ticket | null> {
     try {
       // Verify user exists
       const user = await this.dbRepo.findUserById(userId);
@@ -123,7 +134,10 @@ export class ExampleService {
   /**
    * Example: Bulk user operations
    */
-  async bulkUpdateUserStatus(userIds: string[], isActive: boolean): Promise<number> {
+  async bulkUpdateUserStatus(
+    userIds: string[],
+    isActive: boolean,
+  ): Promise<number> {
     try {
       let updatedCount = 0;
 

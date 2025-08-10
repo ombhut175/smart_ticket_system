@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { USER_ROLES, LOG_MESSAGES, interpolateMessage } from '../../common/helpers/string-const';
+import {
+  USER_ROLES,
+  LOG_MESSAGES,
+  interpolateMessage,
+} from '../../common/helpers/string-const';
 import { DatabaseRepository } from '../../core/database/database.repository';
 
 @Injectable()
@@ -41,7 +45,9 @@ export class AssignmentService {
 
       // Update ticket assignment via Drizzle
       if (assignedUser) {
-        await this.dbRepo.updateTicket(ticketId, { assignedTo: assignedUser.id } as any);
+        await this.dbRepo.updateTicket(ticketId, {
+          assignedTo: assignedUser.id,
+        } as any);
 
         // Log successful assignment
         this.logger.log(
@@ -83,9 +89,16 @@ export class AssignmentService {
       }
 
       // Group skills by user
-      const byUser = new Map<string, { id: string; email: string; skills: string[] }>();
+      const byUser = new Map<
+        string,
+        { id: string; email: string; skills: string[] }
+      >();
       for (const r of rows) {
-        const entry = byUser.get(r.id) || { id: r.id, email: r.email, skills: [] };
+        const entry = byUser.get(r.id) || {
+          id: r.id,
+          email: r.email,
+          skills: [],
+        };
         if (r.skillName) entry.skills.push(r.skillName);
         byUser.set(r.id, entry);
       }

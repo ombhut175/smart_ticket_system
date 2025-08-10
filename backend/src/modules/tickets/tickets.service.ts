@@ -1,4 +1,10 @@
-import { Injectable, Logger, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { DatabaseRepository } from '../../core/database/database.repository';
 import { InngestService } from '../../background/inngest.service';
 import { Ticket } from './interfaces/ticket.interface';
@@ -48,11 +54,13 @@ export class TicketsService {
         createTicketDto.description,
         userId,
         TICKET_STATUS.TODO,
-        TICKET_DEFAULTS.PRIORITY
+        TICKET_DEFAULTS.PRIORITY,
       );
 
       if (!ticket) {
-        this.logger.error(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }));
+        this.logger.error(
+          interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }),
+        );
         throw new BadRequestException('Failed to create ticket');
       }
 
@@ -69,10 +77,12 @@ export class TicketsService {
       });
 
       // Log successful ticket creation
-      this.logger.log(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_SUCCESS, { 
-        ticketId: ticket.id 
-      }));
-      
+      this.logger.log(
+        interpolateMessage(LOG_MESSAGES.TICKET_CREATE_SUCCESS, {
+          ticketId: ticket.id,
+        }),
+      );
+
       return ticket;
     } catch (error) {
       this.logger.error(
@@ -104,7 +114,7 @@ export class TicketsService {
       userId,
       limit,
       offset,
-      { status: query?.status, priority: query?.priority }
+      { status: query?.status, priority: query?.priority },
     );
 
     const mapped = tickets.map((t: any) => ({
@@ -120,7 +130,15 @@ export class TicketsService {
     return { tickets: mapped as any, total, page, limit };
   }
 
-  async findAllForModerator(userRole: string, query?: TicketQueryDto): Promise<{ tickets: Ticket[], total: number, page: number, limit: number }> {
+  async findAllForModerator(
+    userRole: string,
+    query?: TicketQueryDto,
+  ): Promise<{
+    tickets: Ticket[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     if (userRole !== USER_ROLES.MODERATOR && userRole !== USER_ROLES.ADMIN) {
       throw new ForbiddenException(MESSAGES.ACCESS_DENIED);
     }
@@ -132,14 +150,20 @@ export class TicketsService {
     const { tickets, total } = await this.dbRepo.findAllTicketsWithFilters(
       limit,
       offset,
-      { status: query?.status, priority: query?.priority, assigned_to: query?.assigned_to }
+      {
+        status: query?.status,
+        priority: query?.priority,
+        assigned_to: query?.assigned_to,
+      },
     );
 
     // attach assignee and creator emails to mimic previous shape
     const userIds = Array.from(
       new Set(
-        tickets.flatMap((t: any) => [t.createdBy, t.assignedTo].filter(Boolean) as string[])
-      )
+        tickets.flatMap(
+          (t: any) => [t.createdBy, t.assignedTo].filter(Boolean) as string[],
+        ),
+      ),
     );
     const users = await this.dbRepo.findUsersByIds(userIds);
     const idToEmail = new Map(users.map((u) => [u.id, u.email] as const));
@@ -152,8 +176,12 @@ export class TicketsService {
       related_skills: t.relatedSkills,
       created_at: t.createdAt,
       updated_at: t.updatedAt,
-      assignee: t.assignedTo ? { email: idToEmail.get(t.assignedTo) || null } : null,
-      creator: t.createdBy ? { email: idToEmail.get(t.createdBy) || null } : null,
+      assignee: t.assignedTo
+        ? { email: idToEmail.get(t.assignedTo) || null }
+        : null,
+      creator: t.createdBy
+        ? { email: idToEmail.get(t.createdBy) || null }
+        : null,
     }));
 
     return { tickets: mapped as any, total, page, limit };
@@ -178,11 +206,17 @@ export class TicketsService {
     };
 
     if (user.role !== USER_ROLES.USER) {
-      const ids = [ticket.createdBy, ticket.assignedTo].filter(Boolean) as string[];
+      const ids = [ticket.createdBy, ticket.assignedTo].filter(
+        Boolean,
+      ) as string[];
       const users = await this.dbRepo.findUsersByIds(ids);
       const idToEmail = new Map(users.map((u) => [u.id, u.email] as const));
-      mapped.assignee = ticket.assignedTo ? { email: idToEmail.get(ticket.assignedTo!) || null } : null;
-      mapped.creator = ticket.createdBy ? { email: idToEmail.get(ticket.createdBy) || null } : null;
+      mapped.assignee = ticket.assignedTo
+        ? { email: idToEmail.get(ticket.assignedTo!) || null }
+        : null;
+      mapped.creator = ticket.createdBy
+        ? { email: idToEmail.get(ticket.createdBy) || null }
+        : null;
     }
 
     return mapped as any;
@@ -192,18 +226,23 @@ export class TicketsService {
 
   //#region ==================== TICKET UPDATES ====================
 
-  async updateTicket(id: string, updateDto: UpdateTicketDto, user: any): Promise<Ticket> {
+  async updateTicket(
+    id: string,
+    updateDto: UpdateTicketDto,
+    user: any,
+  ): Promise<Ticket> {
     // Convert snake_case DTO to camelCase for Drizzle
     const updateData: any = {};
     if (updateDto.status !== undefined) updateData.status = updateDto.status;
-    if (updateDto.helpful_notes !== undefined) updateData.helpfulNotes = updateDto.helpful_notes;
+    if (updateDto.helpful_notes !== undefined)
+      updateData.helpfulNotes = updateDto.helpful_notes;
 
     const ticket = await this.dbRepo.updateTicket(id, updateData);
 
     if (!ticket) {
       throw new NotFoundException(MESSAGES.TICKET_UPDATE_FAILED);
     }
-    
+
     // Convert back to snake_case for API compatibility
     return {
       ...ticket,

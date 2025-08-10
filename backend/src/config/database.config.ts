@@ -4,7 +4,9 @@ import { ENV } from '../common/helpers/string-const';
 export const databaseConfigSchema = Joi.object({
   [ENV.DATABASE_URL]: Joi.string().uri().required(),
   [ENV.DIRECT_URL]: Joi.string().uri().optional(),
-  [ENV.NODE_ENV]: Joi.string().valid('development', 'production', 'test').default('development'),
+  [ENV.NODE_ENV]: Joi.string()
+    .valid('development', 'production', 'test')
+    .default('development'),
 });
 
 export interface DatabaseConfig {

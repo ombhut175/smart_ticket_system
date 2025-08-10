@@ -6,9 +6,7 @@ import { ApiResponseHelper } from '../../common/helpers/api-response.helper';
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
-  constructor(
-    private readonly drizzleService: DrizzleService,
-  ) {}
+  constructor(private readonly drizzleService: DrizzleService) {}
 
   @Get()
   @ApiOperation({ summary: 'Check application health status' })
@@ -40,10 +38,7 @@ export class HealthController {
       version: process.env.npm_package_version || '1.0.0',
     };
 
-    return ApiResponseHelper.success(
-      healthData,
-      'Application is healthy'
-    );
+    return ApiResponseHelper.success(healthData, 'Application is healthy');
   }
 
   @Get('database')
@@ -92,8 +87,12 @@ export class HealthController {
 
       try {
         const db = this.drizzleService.getDb();
-        const [{ count: usersCount }] = await db.execute<any>(`SELECT COUNT(*)::int as count FROM users`);
-        const [{ count: ticketsCount }] = await db.execute<any>(`SELECT COUNT(*)::int as count FROM tickets`);
+        const [{ count: usersCount }] = await db.execute<any>(
+          `SELECT COUNT(*)::int as count FROM users`,
+        );
+        const [{ count: ticketsCount }] = await db.execute<any>(
+          `SELECT COUNT(*)::int as count FROM tickets`,
+        );
 
         databaseHealth = {
           isConnected: true,
@@ -107,19 +106,20 @@ export class HealthController {
         isConnected = false;
         databaseHealth = {
           isConnected: false,
-          error: err instanceof Error ? err.message : 'Database connection failed',
+          error:
+            err instanceof Error ? err.message : 'Database connection failed',
         };
       }
 
-      const message = databaseHealth.isConnected 
-        ? 'Database connection is healthy' 
+      const message = databaseHealth.isConnected
+        ? 'Database connection is healthy'
         : 'Database connection is unhealthy';
 
       return ApiResponseHelper.success(
         {
           database: databaseHealth,
         },
-        message
+        message,
       );
     } catch (error) {
       throw new HttpException(
@@ -166,8 +166,12 @@ export class HealthController {
   async getDatabaseStats() {
     try {
       const db = this.drizzleService.getDb();
-      const [{ count: usersCount }] = await db.execute<any>(`SELECT COUNT(*)::int as count FROM users`);
-      const [{ count: ticketsCount }] = await db.execute<any>(`SELECT COUNT(*)::int as count FROM tickets`);
+      const [{ count: usersCount }] = await db.execute<any>(
+        `SELECT COUNT(*)::int as count FROM users`,
+      );
+      const [{ count: ticketsCount }] = await db.execute<any>(
+        `SELECT COUNT(*)::int as count FROM tickets`,
+      );
 
       const stats = {
         totalTables: 4, // Hardcoded based on known tables: users, tickets, user_skills, ticket_skills
@@ -179,10 +183,10 @@ export class HealthController {
           version: '1.0.0',
         },
       };
-      
+
       return ApiResponseHelper.success(
         stats,
-        'Database statistics retrieved successfully'
+        'Database statistics retrieved successfully',
       );
     } catch (error) {
       throw new HttpException(
