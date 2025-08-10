@@ -18,6 +18,10 @@ node_modules/
 
 # Personal development folder
 **/development/
+development/
+**/development/
+**/development/**
+development/**
 
 # Logs
 logs/
