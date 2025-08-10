@@ -2,6 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { DrizzleService } from './drizzle.client';
 import { DatabaseRepository } from './database.repository';
+import { UsersRepository } from './repositories/users.repository';
+import { TicketsRepository } from './repositories/tickets.repository';
+import { SkillsRepository } from './repositories/skills.repository';
 
 describe('DrizzleService', () => {
   let service: DrizzleService;
@@ -51,24 +54,46 @@ describe('DatabaseRepository', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        DatabaseRepository,
         {
           provide: DrizzleService,
           useValue: {
             getDb: jest.fn(() => ({
               insert: jest.fn().mockReturnValue({
                 values: jest.fn().mockReturnValue({
-                  returning: jest.fn().mockResolvedValue([{ id: 'test-id', email: 'test@example.com' }]),
+                  returning: jest
+                    .fn()
+                    .mockResolvedValue([
+                      { id: 'test-id', email: 'test@example.com' },
+                    ]),
                 }),
               }),
               select: jest.fn().mockReturnValue({
                 from: jest.fn().mockReturnValue({
-                  where: jest.fn().mockResolvedValue([{ id: 'test-id', email: 'test@example.com' }]),
+                  where: jest
+                    .fn()
+                    .mockResolvedValue([
+                      { id: 'test-id', email: 'test@example.com' },
+                    ]),
+                }),
+              }),
+              update: jest.fn().mockReturnValue({
+                set: jest.fn().mockReturnValue({
+                  where: jest.fn().mockReturnValue({
+                    returning: jest
+                      .fn()
+                      .mockResolvedValue([
+                        { id: 'test-id', email: 'test@example.com' },
+                      ]),
+                  }),
                 }),
               }),
             })),
           },
         },
+        UsersRepository,
+        TicketsRepository,
+        SkillsRepository,
+        DatabaseRepository,
       ],
     }).compile();
 
