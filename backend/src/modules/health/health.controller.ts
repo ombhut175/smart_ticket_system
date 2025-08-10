@@ -1,13 +1,13 @@
 import { Controller, Get, HttpStatus, HttpException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SupabaseService } from '../../core/database/supabase.client';
+import { DrizzleService } from '../../core/database/drizzle.client';
 import { ApiResponseHelper } from '../../common/helpers/api-response.helper';
 
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(
-    private readonly supabaseService: SupabaseService,
+    private readonly drizzleService: DrizzleService,
   ) {}
 
   @Get()
@@ -78,16 +78,8 @@ export class HealthController {
   })
   async getDatabaseHealth() {
     try {
-      // Check database connection using Supabase
-      const { data: connectionTest, error: connectionError } = await this.supabaseService
-        .getClient()
-        .from('users')
-        .select('count')
-        .limit(1);
-
-      const isConnected = !connectionError;
-
-      // Get database statistics using Supabase
+      // Check database connection using Drizzle
+      let isConnected = true;
       let databaseHealth: {
         isConnected: boolean;
         databaseName?: string;
@@ -98,34 +90,24 @@ export class HealthController {
         totalTestingRecords?: number;
       };
 
-      if (isConnected) {
-        try {
-          // Get counts for various tables
-          const [userCountResult, ticketCountResult] = await Promise.all([
-            this.supabaseService.getClient().from('users').select('*', { count: 'exact', head: true }),
-            this.supabaseService.getClient().from('tickets').select('*', { count: 'exact', head: true }),
-          ]);
+      try {
+        const db = this.drizzleService.getDb();
+        const [{ count: usersCount }] = await db.execute<any>(`SELECT COUNT(*)::int as count FROM users`);
+        const [{ count: ticketsCount }] = await db.execute<any>(`SELECT COUNT(*)::int as count FROM tickets`);
 
-          databaseHealth = {
-            isConnected: true,
-            databaseName: 'supabase',
-            version: '1.0.0',
-            totalUsers: userCountResult.count || 0,
-            totalTickets: ticketCountResult.count || 0,
-            totalTestingRecords: 0,
-          };
-        } catch (countError) {
-          databaseHealth = {
-            isConnected: true,
-            databaseName: 'supabase',
-            version: '1.0.0',
-            error: `Connected but failed to get counts: ${countError instanceof Error ? countError.message : 'Unknown error'}`,
-          };
-        }
-      } else {
+        databaseHealth = {
+          isConnected: true,
+          databaseName: 'supabase',
+          version: '1.0.0',
+          totalUsers: Number(usersCount) || 0,
+          totalTickets: Number(ticketsCount) || 0,
+          totalTestingRecords: 0,
+        };
+      } catch (err) {
+        isConnected = false;
         databaseHealth = {
           isConnected: false,
-          error: connectionError?.message || 'Database connection failed',
+          error: err instanceof Error ? err.message : 'Database connection failed',
         };
       }
 
@@ -183,16 +165,14 @@ export class HealthController {
   })
   async getDatabaseStats() {
     try {
-      // Get counts for various tables
-      const [userCountResult, ticketCountResult] = await Promise.all([
-        this.supabaseService.getClient().from('users').select('*', { count: 'exact', head: true }),
-        this.supabaseService.getClient().from('tickets').select('*', { count: 'exact', head: true }),
-      ]);
+      const db = this.drizzleService.getDb();
+      const [{ count: usersCount }] = await db.execute<any>(`SELECT COUNT(*)::int as count FROM users`);
+      const [{ count: ticketsCount }] = await db.execute<any>(`SELECT COUNT(*)::int as count FROM tickets`);
 
       const stats = {
         totalTables: 4, // Hardcoded based on known tables: users, tickets, user_skills, ticket_skills
-        totalUsers: userCountResult.count || 0,
-        totalTickets: ticketCountResult.count || 0,
+        totalUsers: Number(usersCount) || 0,
+        totalTickets: Number(ticketsCount) || 0,
         connectionInfo: {
           isConnected: true,
           databaseName: 'supabase',

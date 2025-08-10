@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { DatabaseRepository } from '../../core/database/database.repository';
-import { SupabaseService } from '../../core/database/supabase.client';
 import { 
   MESSAGES, 
   USER_ROLES,
@@ -19,7 +18,6 @@ export class UsersService {
 
   constructor(
     private readonly dbRepo: DatabaseRepository,
-    private readonly supabase: SupabaseService
   ) {}
 
   async getProfile(userId: string) {
@@ -140,25 +138,15 @@ export class UsersService {
     this.logger.log(interpolateMessage(LOG_MESSAGES.USER_TOGGLE_ACTIVE_STARTED, { userId: id }));
     
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .from(TABLES.USERS)
-        .update({ [TABLE_COLUMNS.IS_ACTIVE]: isActive })
-        .eq(TABLE_COLUMNS.ID, id)
-        .select(QUERY_SELECTORS.ALL_FIELDS)
-        .single();
-
-      if (error) {
-        this.logger.error(`Failed to toggle active status for user: ${id}`, error);
-        throw new BadRequestException(error.message);
+      const data = await this.dbRepo.updateUserActiveStatus(id, isActive);
+      if (!data) {
+        this.logger.error(`Failed to toggle active status for user: ${id}`);
+        throw new BadRequestException('Failed to update user');
       }
-
-      // Log successful toggle
       this.logger.log(interpolateMessage(LOG_MESSAGES.USER_TOGGLE_ACTIVE_SUCCESS, { 
         userId: id, 
         isActive: isActive.toString() 
       }));
-
       return data;
     } catch (error) {
       this.logger.error(`Failed to toggle active status for user: ${id}`, error);
@@ -177,25 +165,15 @@ export class UsersService {
     }));
     
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .from(TABLES.USERS)
-        .update({ [TABLE_COLUMNS.ROLE]: role })
-        .eq(TABLE_COLUMNS.ID, id)
-        .select(QUERY_SELECTORS.ALL_FIELDS)
-        .single();
-
-      if (error) {
-        this.logger.error(`Failed to update role for user: ${id} to ${role}`, error);
-        throw new BadRequestException(error.message);
+      const data = await this.dbRepo.updateUserRoleCompat(id, role as string);
+      if (!data) {
+        this.logger.error(`Failed to update role for user: ${id} to ${role}`);
+        throw new BadRequestException('Failed to update user');
       }
-
-      // Log successful role update
       this.logger.log(interpolateMessage(LOG_MESSAGES.USER_ROLE_UPDATE_SUCCESS, { 
         userId: id, 
         role: role 
       }));
-
       return data;
     } catch (error) {
       this.logger.error(`Failed to update role for user: ${id} to ${role}`, error);
@@ -307,25 +285,12 @@ export class UsersService {
     this.logger.log('Fetching all moderators with skills');
     
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .from(TABLES.USERS)
-        .select(QUERY_SELECTORS.USERS_WITH_SKILLS)
-        .eq(TABLE_COLUMNS.ROLE, USER_ROLES.MODERATOR);
-
-      if (error) {
-        this.logger.error('Failed to fetch moderators', error);
-        throw new BadRequestException(error.message);
-      }
-
+      const data = await this.dbRepo.findModeratorsWithSkillsCompat();
       const result = (data || []).map((u: any) => ({
         ...u,
         skills: u.user_skills || [],
       }));
-
       this.logger.log(`Successfully fetched ${result.length} moderators`);
-
-      // Ensure skills array exists
       return result;
     } catch (error) {
       this.logger.error('Failed to fetch moderators', error);
@@ -337,18 +302,10 @@ export class UsersService {
    * Get a single moderator with skills
    */
   async getModeratorById(id: string) {
-    const { data, error } = await this.supabase
-      .getClient()
-      .from(TABLES.USERS)
-      .select(QUERY_SELECTORS.USERS_WITH_SKILLS)
-      .eq(TABLE_COLUMNS.ID, id)
-      .eq(TABLE_COLUMNS.ROLE, USER_ROLES.MODERATOR)
-      .single();
-
-    if (error || !data) {
+    const data = await this.dbRepo.findModeratorWithSkillsByIdCompat(id);
+    if (!data) {
       throw new NotFoundException(MESSAGES.NOT_FOUND);
     }
-
     return {
       ...data,
       skills: data.user_skills || [],

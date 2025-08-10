@@ -4,12 +4,14 @@ import { TicketsController } from './tickets.controller';
 import { BackgroundModule } from '../../background/background.module';
 import { UsersModule } from '../users/users.module';
 import { DatabaseModule } from '../../core/database/database.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     BackgroundModule, // For Inngest integration
     UsersModule, // For user validation
-    DatabaseModule, // Provides SupabaseService
+    DatabaseModule,
+    AuthModule,
   ],
   controllers: [TicketsController],
   providers: [TicketsService],

@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 import { users } from './users.schema';
@@ -8,9 +8,7 @@ export const userSkills = pgTable('user_skills', {
   userId: uuid('user_id').notNull().references(() => users.id),
   skillName: varchar('skill_name', { length: 100 }).notNull(),
   proficiencyLevel: varchar('proficiency_level', { length: 50 }).notNull().default('beginner'),
-  skills: text('skills'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 // Zod schemas for validation

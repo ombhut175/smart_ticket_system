@@ -9,14 +9,14 @@ import {
   MESSAGES 
 } from '../../common/helpers/string-const';
 import { InngestService } from '../inngest.service';
-import { SupabaseService } from '../../core/database/supabase.client';
+import { DatabaseRepository } from '../../core/database/database.repository';
 import { AiService } from '../../modules/ai/ai.service';
 import { AssignmentService } from '../../modules/assignment/assignment.service';
 import { EmailService } from '../../modules/email/email.service';
 
 export const createTicketCreatedWorkflow = (
   inngestService: InngestService,
-  supabaseService: SupabaseService,
+  dbRepo: DatabaseRepository,
   aiService: AiService,
   assignmentService: AssignmentService,
   emailService: EmailService,
@@ -32,14 +32,9 @@ export const createTicketCreatedWorkflow = (
         // Step 1: Fetch ticket
         const ticket = await step.run(INNGEST_STEPS.FETCH_TICKET as string, async () => {
           console.log(`📋 Fetching ticket with ID: ${ticketId}`);
-          const { data, error } = await supabaseService
-            .getClient()
-            .from(TABLES.TICKETS)
-            .select('*')
-            .eq(TABLE_COLUMNS.ID, ticketId)
-            .single();
-          if (error || !data) {
-            console.error(`❌ Ticket not found: ${ticketId}`, error);
+          const data = await dbRepo.findTicketById(ticketId);
+          if (!data) {
+            console.error(`❌ Ticket not found: ${ticketId}`);
             throw new NonRetriableError(MESSAGES.TICKET_NOT_FOUND);
           }
           console.log(`✅ Ticket fetched successfully: ${data.title}`);
@@ -49,11 +44,7 @@ export const createTicketCreatedWorkflow = (
         // Step 2: mark status TODO (processing start)
         await step.run(INNGEST_STEPS.UPDATE_TICKET_STATUS as string, async () => {
           console.log(`🔄 Updating ticket status to TODO for: ${ticket.id}`);
-          await supabaseService
-            .getClient()
-            .from(TABLES.TICKETS)
-            .update({ [TABLE_COLUMNS.STATUS]: TICKET_STATUS.TODO })
-            .eq(TABLE_COLUMNS.ID, ticket.id);
+          await dbRepo.updateTicket(ticket.id, { status: TICKET_STATUS.TODO } as any);
           console.log(`✅ Ticket status updated to TODO`);
         });
 
@@ -67,17 +58,13 @@ export const createTicketCreatedWorkflow = (
               ? aiResponse.priority
               : 'medium';
 
-            await supabaseService
-              .getClient()
-              .from(TABLES.TICKETS)
-              .update({
-                [TABLE_COLUMNS.PRIORITY]: validPriority,
-                [TABLE_COLUMNS.HELPFUL_NOTES]: aiResponse.helpfulNotes,
-                [TABLE_COLUMNS.SUMMARY]: aiResponse.summary,
-                [TABLE_COLUMNS.STATUS]: TICKET_STATUS.IN_PROGRESS,
-                [TABLE_COLUMNS.RELATED_SKILLS]: aiResponse.relatedSkills,
-              })
-              .eq(TABLE_COLUMNS.ID, ticket.id);
+            await dbRepo.updateTicket(ticket.id, {
+              priority: validPriority,
+              helpfulNotes: aiResponse.helpfulNotes,
+              summary: aiResponse.summary,
+              status: TICKET_STATUS.IN_PROGRESS,
+              relatedSkills: aiResponse.relatedSkills as any,
+            } as any);
             console.log(`✅ Ticket updated with AI insights`);
             return aiResponse.relatedSkills || [];
           }

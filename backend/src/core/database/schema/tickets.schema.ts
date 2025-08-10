@@ -13,7 +13,8 @@ export const tickets = pgTable('tickets', {
   assignedTo: uuid('assigned_to').references(() => users.id),
   summary: text('summary'),
   helpfulNotes: text('helpful_notes'),
-  relatedSkills: text('related_skills'),
+  // Supabase has related_skills as an array column
+  relatedSkills: text('related_skills').array(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

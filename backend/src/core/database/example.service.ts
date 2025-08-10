@@ -43,7 +43,7 @@ export class ExampleService {
       
       // Filter users who have the specific skill
       const usersWithSpecificSkill = usersWithSkills
-        .filter(item => item.skills && item.skills.skillName === skillName)
+        .filter(item => item.skill && item.skill.skillName === skillName)
         .map(item => item.user);
 
       this.logger.log(`Found ${usersWithSpecificSkill.length} users with skill: ${skillName}`);
