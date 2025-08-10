@@ -26,6 +26,48 @@ export class DatabaseRepository {
     return user;
   }
 
+  /**
+   * Fetch active users by role with their skills (if any).
+   * Returns a flattened list where each row may contain a user and optionally a skill record.
+   */
+  async findActiveUsersWithSkillsByRole(role: string): Promise<{
+    id: string;
+    email: string;
+    skillName?: string | null;
+  }[]> {
+    const db = this.drizzleService.getDb();
+    const rows = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        skillName: userSkills.skillName,
+      })
+      .from(users)
+      .leftJoin(userSkills, eq(users.id, userSkills.userId))
+      .where(and(eq(users.role, role), eq(users.isActive, true)))
+      .orderBy(asc(users.email));
+
+    return rows.map(r => ({ id: r.id, email: r.email, skillName: r.skillName ?? null }));
+  }
+
+  /**
+   * Find a single active admin user (for fallback assignment).
+   * Matches the original Supabase query that selected 'id, email' with limit(1).single()
+   */
+  async findSingleActiveAdmin(): Promise<{ id: string; email: string } | null> {
+    const db = this.drizzleService.getDb();
+    const [admin] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+      })
+      .from(users)
+      .where(and(eq(users.role, 'admin'), eq(users.isActive, true)))
+      .limit(1);
+    
+    return admin || null;
+  }
+
   async findUserById(id: string): Promise<User | null> {
     const [user] = await this.drizzleService.getDb()
       .select()
@@ -51,6 +93,51 @@ export class DatabaseRepository {
     return user || null;
   }
 
+  /**
+   * Update user and return with snake_case fields for backward compatibility
+   */
+  async updateUserProfile(id: string, profileData: any): Promise<any> {
+    // Convert snake_case to camelCase for Drizzle
+    const updateData: Partial<NewUser> = {};
+    if (profileData.first_name !== undefined) updateData.firstName = profileData.first_name;
+    if (profileData.last_name !== undefined) updateData.lastName = profileData.last_name;
+    if (profileData.email !== undefined) updateData.email = profileData.email;
+    if (profileData.role !== undefined) updateData.role = profileData.role;
+    if (profileData.is_active !== undefined) updateData.isActive = profileData.is_active;
+    
+    const user = await this.updateUser(id, updateData);
+    if (!user) return null;
+    
+    // Convert back to snake_case for API compatibility
+    return {
+      ...user,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      is_active: user.isActive,
+      last_login_at: user.lastLoginAt,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    };
+  }
+
+  /**
+   * Update user's last login time
+   */
+  async updateLastLogin(id: string): Promise<any> {
+    const user = await this.updateUser(id, { lastLoginAt: new Date() });
+    if (!user) return null;
+    
+    return {
+      ...user,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      is_active: user.isActive,
+      last_login_at: user.lastLoginAt,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    };
+  }
+
   async findAllUsers(limit = 20, offset = 0): Promise<{ users: User[]; total: number }> {
     const usersResult = await this.drizzleService.getDb()
       .select()
@@ -73,6 +160,29 @@ export class DatabaseRepository {
       .values(ticketData)
       .returning();
     return ticket;
+  }
+
+  /**
+   * Create ticket with snake_case input/output for backward compatibility
+   */
+  async createTicketCompat(title: string, description: string, createdBy: string, status: string, priority: string): Promise<any> {
+    const ticket = await this.createTicket({
+      title,
+      description,
+      createdBy,
+      status,
+      priority,
+    });
+    
+    return {
+      ...ticket,
+      created_by: ticket.createdBy,
+      assigned_to: ticket.assignedTo,
+      helpful_notes: ticket.helpfulNotes,
+      related_skills: ticket.relatedSkills,
+      created_at: ticket.createdAt,
+      updated_at: ticket.updatedAt,
+    };
   }
 
   async findTicketById(id: string): Promise<Ticket | null> {
@@ -139,6 +249,53 @@ export class DatabaseRepository {
       .values(skillData)
       .returning();
     return skill;
+  }
+
+  /**
+   * Add user skill with snake_case input/output for backward compatibility
+   */
+  async addUserSkillCompat(userId: string, skillName: string, proficiencyLevel: string): Promise<any> {
+    const skill = await this.addUserSkill({
+      userId,
+      skillName,
+      proficiencyLevel,
+    });
+    
+    return {
+      ...skill,
+      user_id: skill.userId,
+      skill_name: skill.skillName,
+      proficiency_level: skill.proficiencyLevel,
+      created_at: skill.createdAt,
+      updated_at: skill.updatedAt,
+    };
+  }
+
+  /**
+   * Add multiple user skills in batch
+   */
+  async addUserSkillsBatch(userId: string, skills: Array<{ skill_name: string; proficiency_level: string }>): Promise<any[]> {
+    if (!skills || skills.length === 0) return [];
+    
+    const skillData = skills.map(s => ({
+      userId,
+      skillName: s.skill_name,
+      proficiencyLevel: s.proficiency_level,
+    }));
+    
+    const inserted = await this.drizzleService.getDb()
+      .insert(userSkills)
+      .values(skillData)
+      .returning();
+    
+    return inserted.map(s => ({
+      ...s,
+      user_id: s.userId,
+      skill_name: s.skillName,
+      proficiency_level: s.proficiencyLevel,
+      created_at: s.createdAt,
+      updated_at: s.updatedAt,
+    }));
   }
 
   async findUserSkills(userId: string): Promise<UserSkill[]> {

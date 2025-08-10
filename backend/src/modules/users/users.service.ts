@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { DatabaseRepository } from '../../core/database/database.repository';
 import { SupabaseService } from '../../core/database/supabase.client';
 import { 
   MESSAGES, 
-  TABLES, 
-  TABLE_COLUMNS, 
-  QUERY_SELECTORS, 
   USER_ROLES,
   LOG_MESSAGES,
-  interpolateMessage 
+  interpolateMessage,
+  TABLE_COLUMNS,
+  TABLES,
+  QUERY_SELECTORS 
 } from '../../common/helpers/string-const';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AddUserSkillDto } from './dto/add-user-skill.dto';
@@ -16,22 +17,20 @@ import { AddUserSkillDto } from './dto/add-user-skill.dto';
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly dbRepo: DatabaseRepository,
+    private readonly supabase: SupabaseService
+  ) {}
 
   async getProfile(userId: string) {
     // Log profile fetch start
     this.logger.log(interpolateMessage(LOG_MESSAGES.USER_PROFILE_FETCH_STARTED, { userId }));
     
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .from(TABLES.USERS)
-        .select(QUERY_SELECTORS.ALL_FIELDS)
-        .eq(TABLE_COLUMNS.ID, userId)
-        .single();
+      const user = await this.dbRepo.findUserById(userId);
 
-      if (error || !data) {
-        this.logger.error(`Failed to fetch user profile for user: ${userId}`, error);
+      if (!user) {
+        this.logger.error(`Failed to fetch user profile for user: ${userId}`);
         throw new NotFoundException(MESSAGES.NOT_FOUND);
       }
 
@@ -40,11 +39,18 @@ export class UsersService {
        * Profile is considered complete when both first_name and last_name are present
        * This helps frontend determine if user needs to complete their profile
        */
-      const is_profile_completed = !!(data[TABLE_COLUMNS.FIRST_NAME] && data[TABLE_COLUMNS.LAST_NAME]);
+      const is_profile_completed = !!(user.firstName && user.lastName);
 
       const result = {
-        ...data,
+        ...user,
         is_profile_completed,
+        // Map camelCase back to snake_case for backward compatibility
+        first_name: user.firstName,
+        last_name: user.lastName,
+        is_active: user.isActive,
+        last_login_at: user.lastLoginAt,
+        created_at: user.createdAt,
+        updated_at: user.updatedAt,
       };
 
       // Log successful profile fetch
@@ -62,17 +68,11 @@ export class UsersService {
     this.logger.log(interpolateMessage(LOG_MESSAGES.USER_PROFILE_UPDATE_STARTED, { userId }));
     
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .from(TABLES.USERS)
-        .update({ ...dto })
-        .eq(TABLE_COLUMNS.ID, userId)
-        .select(QUERY_SELECTORS.ALL_FIELDS)
-        .single();
+      const data = await this.dbRepo.updateUserProfile(userId, dto);
 
-      if (error) {
-        this.logger.error(interpolateMessage(LOG_MESSAGES.USER_PROFILE_UPDATE_FAILED, { userId }), error);
-        throw new BadRequestException(error.message);
+      if (!data) {
+        this.logger.error(interpolateMessage(LOG_MESSAGES.USER_PROFILE_UPDATE_FAILED, { userId }));
+        throw new BadRequestException('Failed to update profile');
       }
 
       // Log successful profile update
@@ -93,21 +93,7 @@ export class UsersService {
     }));
     
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .from(TABLES.USER_SKILLS)
-        .insert({
-          [TABLE_COLUMNS.USER_ID]: id,
-          [TABLE_COLUMNS.SKILL_NAME]: dto.skill_name,
-          [TABLE_COLUMNS.PROFICIENCY_LEVEL]: dto.proficiency_level,
-        })
-        .select(QUERY_SELECTORS.ALL_FIELDS)
-        .single();
-
-      if (error) {
-        this.logger.error(`Failed to add skill ${dto.skill_name} for user: ${id}`, error);
-        throw new BadRequestException(error.message);
-      }
+      const data = await this.dbRepo.addUserSkillCompat(id, dto.skill_name, dto.proficiency_level);
 
       // Log successful skill addition
       this.logger.log(interpolateMessage(LOG_MESSAGES.USER_SKILL_ADD_SUCCESS, { 
@@ -118,7 +104,7 @@ export class UsersService {
       return data;
     } catch (error) {
       this.logger.error(`Failed to add skill ${dto.skill_name} for user: ${id}`, error);
-      throw error;
+      throw new BadRequestException(error.message || 'Failed to add skill');
     }
   }
 
@@ -128,18 +114,22 @@ export class UsersService {
    * Find user by ID
    */
   async findById(id: string) {
-    const { data, error } = await this.supabase
-      .getClient()
-      .from(TABLES.USERS)
-      .select(QUERY_SELECTORS.ALL_FIELDS)
-      .eq(TABLE_COLUMNS.ID, id)
-      .single();
+    const user = await this.dbRepo.findUserById(id);
 
-    if (error || !data) {
+    if (!user) {
       throw new NotFoundException(MESSAGES.NOT_FOUND);
     }
 
-    return data;
+    // Return with snake_case for compatibility
+    return {
+      ...user,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      is_active: user.isActive,
+      last_login_at: user.lastLoginAt,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    };
   }
 
   /**
@@ -217,16 +207,10 @@ export class UsersService {
    * Update user's last login timestamp
    */
   async updateLastLogin(id: string) {
-    const { data, error } = await this.supabase
-      .getClient()
-      .from(TABLES.USERS)
-      .update({ [TABLE_COLUMNS.LAST_LOGIN_AT]: new Date().toISOString() })
-      .eq(TABLE_COLUMNS.ID, id)
-      .select(QUERY_SELECTORS.ALL_FIELDS)
-      .single();
+    const data = await this.dbRepo.updateLastLogin(id);
 
-    if (error) {
-      throw new BadRequestException(error.message);
+    if (!data) {
+      throw new BadRequestException('Failed to update last login');
     }
 
     return data;
@@ -240,43 +224,35 @@ export class UsersService {
       return [];
     }
 
-    const rows = skills.map((s) => ({
-      [TABLE_COLUMNS.USER_ID]: userId,
-      [TABLE_COLUMNS.SKILL_NAME]: s.skill_name,
-      [TABLE_COLUMNS.PROFICIENCY_LEVEL]: s.proficiency_level,
-    }));
-
-    const { data, error } = await this.supabase
-      .getClient()
-      .from(TABLES.USER_SKILLS)
-      .insert(rows)
-      .select(QUERY_SELECTORS.ALL_FIELDS);
-
-    if (error) {
-      throw new BadRequestException(error.message);
+    try {
+      return await this.dbRepo.addUserSkillsBatch(userId, skills);
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Failed to add skills');
     }
-
-    return data;
   }
 
   /**
    * Find user by email
    */
   async findByEmail(email: string) {
-    const { data, error } = await this.supabase
-      .getClient()
-      .from(TABLES.USERS)
-      .select(QUERY_SELECTORS.ALL_FIELDS)
-      .eq(TABLE_COLUMNS.EMAIL, email)
-      .single();
+    const user = await this.dbRepo.findUserByEmail(email);
 
-    if (error || !data) {
+    if (!user) {
       throw new NotFoundException(
         interpolateMessage(MESSAGES.USER_NOT_FOUND_BY_EMAIL, { email })
       );
     }
 
-    return data;
+    // Return with snake_case for compatibility
+    return {
+      ...user,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      is_active: user.isActive,
+      last_login_at: user.lastLoginAt,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    };
   }
 
   /**

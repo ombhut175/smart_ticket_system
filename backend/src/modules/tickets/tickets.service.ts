@@ -1,5 +1,6 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../core/database/supabase.client';
+import { DatabaseRepository } from '../../core/database/database.repository';
 import { InngestService } from '../../background/inngest.service';
 import { Ticket } from './interfaces/ticket.interface';
 import { CreateTicketDto } from './dto/create-ticket.dto';
@@ -24,6 +25,7 @@ export class TicketsService {
 
   constructor(
     private supabaseService: SupabaseService,
+    private dbRepo: DatabaseRepository,
     private inngestService: InngestService,
   ) {}
 
@@ -37,40 +39,35 @@ export class TicketsService {
     }));
     
     try {
-      // Insert ticket into database
-      const { data: ticket, error } = await this.supabaseService
-        .getClient()
-        .from(TABLES.TICKETS)
-        .insert({
-          [TABLE_COLUMNS.TITLE]: createTicketDto.title,
-          [TABLE_COLUMNS.DESCRIPTION]: createTicketDto.description,
-          [TABLE_COLUMNS.CREATED_BY]: userId,
-          [TABLE_COLUMNS.STATUS]: TICKET_STATUS.TODO,
-          [TABLE_COLUMNS.PRIORITY]: TICKET_DEFAULTS.PRIORITY,
-        })
-        .select()
-        .single();
+      // Insert ticket into database using Drizzle
+      const ticket = await this.dbRepo.createTicketCompat(
+        createTicketDto.title,
+        createTicketDto.description,
+        userId,
+        TICKET_STATUS.TODO,
+        TICKET_DEFAULTS.PRIORITY
+      );
 
-      if (error) {
-        this.logger.error(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }), error);
-        throw new BadRequestException(error.message);
+      if (!ticket) {
+        this.logger.error(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }));
+        throw new BadRequestException('Failed to create ticket');
       }
 
       // Emit event for AI processing (following project helper)
-      this.logger.log(`📤 Sending Inngest event for ticket: ${ticket[TABLE_COLUMNS.ID]}`);
+      this.logger.log(`📤 Sending Inngest event for ticket: ${ticket.id}`);
       await this.inngestService.sendEvent({
         name: INNGEST_EVENTS.TICKET_CREATED,
         data: {
-          ticketId: ticket[TABLE_COLUMNS.ID],
-          title: ticket[TABLE_COLUMNS.TITLE],
-          description: ticket[TABLE_COLUMNS.DESCRIPTION],
+          ticketId: ticket.id,
+          title: ticket.title,
+          description: ticket.description,
           createdBy: userId,
         },
       });
 
       // Log successful ticket creation
       this.logger.log(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_SUCCESS, { 
-        ticketId: ticket[TABLE_COLUMNS.ID] 
+        ticketId: ticket.id 
       }));
       
       return ticket;
@@ -176,21 +173,27 @@ export class TicketsService {
   //#region ==================== TICKET UPDATES ====================
 
   async updateTicket(id: string, updateDto: UpdateTicketDto, user: any): Promise<Ticket> {
-    const { data, error } = await this.supabaseService
-      .getClient()
-      .from(TABLES.TICKETS)
-      .update({
-        ...updateDto,
-        [TABLE_COLUMNS.UPDATED_AT]: new Date().toISOString(),
-      })
-      .eq(TABLE_COLUMNS.ID, id)
-      .select()
-      .single();
+    // Convert snake_case DTO to camelCase for Drizzle
+    const updateData: any = {};
+    if (updateDto.status !== undefined) updateData.status = updateDto.status;
+    if (updateDto.helpful_notes !== undefined) updateData.helpfulNotes = updateDto.helpful_notes;
 
-    if (error || !data) {
+    const ticket = await this.dbRepo.updateTicket(id, updateData);
+
+    if (!ticket) {
       throw new NotFoundException(MESSAGES.TICKET_UPDATE_FAILED);
     }
-    return data;
+    
+    // Convert back to snake_case for API compatibility
+    return {
+      ...ticket,
+      created_by: ticket.createdBy,
+      assigned_to: ticket.assignedTo,
+      helpful_notes: ticket.helpfulNotes,
+      related_skills: ticket.relatedSkills,
+      created_at: ticket.createdAt,
+      updated_at: ticket.updatedAt,
+    } as any;
   }
 
   //#endregion
@@ -199,26 +202,17 @@ export class TicketsService {
 
   async deleteTicket(id: string, user: any): Promise<void> {
     // First check if ticket exists
-    const { data: existingTicket, error: findError } = await this.supabaseService
-      .getClient()
-      .from(TABLES.TICKETS)
-      .select(TABLE_COLUMNS.ID)
-      .eq(TABLE_COLUMNS.ID, id)
-      .single();
+    const existingTicket = await this.dbRepo.findTicketById(id);
 
-    if (findError || !existingTicket) {
+    if (!existingTicket) {
       throw new NotFoundException(MESSAGES.TICKET_NOT_FOUND);
     }
 
     // Delete the ticket
-    const { error } = await this.supabaseService
-      .getClient()
-      .from(TABLES.TICKETS)
-      .delete()
-      .eq(TABLE_COLUMNS.ID, id);
+    const deleted = await this.dbRepo.deleteTicket(id);
 
-    if (error) {
-      this.logger.error(`Failed to delete ticket ${id}:`, error);
+    if (!deleted) {
+      this.logger.error(`Failed to delete ticket ${id}`);
       throw new BadRequestException(MESSAGES.TICKET_DELETE_FAILED);
     }
 
