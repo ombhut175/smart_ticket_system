@@ -10,66 +10,15 @@ import { Plus, Filter, Search, Clock, CheckCircle, Circle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
-import { User } from "@/types";
+import { User, Ticket } from "@/types";
+import { ticketService } from "@/services/ticket.service"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
 
-// Mock data for demonstration
-const mockTickets = [
-  {
-    id: "TK-001",
-    title: "Login issues with mobile app",
-    status: "Open",
-    priority: "High",
-    lastUpdated: "2024-01-15T10:30:00Z",
-    createdAt: "2024-01-14T09:15:00Z",
-  },
-  {
-    id: "TK-002",
-    title: "Feature request: Dark mode support",
-    status: "In Progress",
-    priority: "Medium",
-    lastUpdated: "2024-01-14T16:45:00Z",
-    createdAt: "2024-01-13T11:20:00Z",
-  },
-  {
-    id: "TK-003",
-    title: "Payment processing error on checkout",
-    status: "Resolved",
-    priority: "High",
-    lastUpdated: "2024-01-12T14:20:00Z",
-    createdAt: "2024-01-10T08:30:00Z",
-  },
-  {
-    id: "TK-004",
-    title: "Account verification help needed",
-    status: "Open",
-    priority: "Low",
-    lastUpdated: "2024-01-10T09:15:00Z",
-    createdAt: "2024-01-09T15:45:00Z",
-  },
-  {
-    id: "TK-005",
-    title: "Data export functionality request",
-    status: "In Progress",
-    priority: "Medium",
-    lastUpdated: "2024-01-08T11:30:00Z",
-    createdAt: "2024-01-07T13:20:00Z",
-  },
-  {
-    id: "TK-006",
-    title: "Bug report: Dashboard not loading",
-    status: "Resolved",
-    priority: "High",
-    lastUpdated: "2024-01-05T16:00:00Z",
-    createdAt: "2024-01-04T10:15:00Z",
-  },
-]
+// Fallback user shape for header when not yet loaded
+const fallbackUser: User = { name: "", email: "", role: "user", is_active: true, is_email_verified: false, is_profile_completed: false, id: "", created_at: "", updated_at: "" }
 
-const mockUser: User = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  role: "User",
-  avatar: "",
-}
+const mockUser: User = fallbackUser
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
@@ -81,7 +30,37 @@ function StatusBadge({ status }: { status: string }) {
       case "Resolved":
         return { color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400", icon: CheckCircle }
       default:
-        return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: Circle }
+        // Map API statuses to display values
+        const mapping: Record<string, { label: string; color: string; icon: any }> = {
+          todo: { label: "Todo", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: Circle },
+          in_progress: {
+            label: "In Progress",
+            color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
+            icon: Clock,
+          },
+          waiting_for_customer: {
+            label: "Waiting",
+            color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+            icon: Clock,
+          },
+          resolved: {
+            label: "Resolved",
+            color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+            icon: CheckCircle,
+          },
+          closed: {
+            label: "Closed",
+            color: "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200",
+            icon: CheckCircle,
+          },
+          cancelled: {
+            label: "Cancelled",
+            color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
+            icon: Circle,
+          },
+        }
+        const mapped = mapping[status] || mapping.todo
+        return { color: mapped.color, icon: mapped.icon }
     }
   }
 
@@ -105,7 +84,13 @@ function PriorityBadge({ priority }: { priority: string }) {
       case "Low":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+        const colorMap: Record<string, string> = {
+          low: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+          medium: "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400",
+          high: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
+          urgent: "bg-red-200 text-red-900 dark:bg-red-950/30 dark:text-red-300",
+        }
+        return colorMap[priority.toLowerCase()] || "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
     }
   }
 
@@ -125,21 +110,36 @@ function formatDate(dateString: string) {
 }
 
 export default function TicketsPage() {
+  const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     setMounted(true)
+    const load = async () => {
+      try {
+        const res = await ticketService.getUserTickets({ page: 1, limit: 20 })
+        setTickets(res.data)
+      } catch (e: any) {
+        toast.error(e?.message || "Failed to load tickets")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
   }, [])
 
   if (!mounted) return null
 
   // Filter tickets based on current filters
-  const filteredTickets = mockTickets.filter((ticket) => {
+  const filteredTickets = tickets.filter((ticket) => {
     const matchesStatus = statusFilter === "all" || ticket.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter
+    const matchesPriority =
+      priorityFilter === "all" || ticket.priority.toLowerCase() === priorityFilter.toLowerCase()
     const matchesSearch =
       searchQuery === "" ||
       ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -151,7 +151,7 @@ export default function TicketsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-indigo-900/20">
       {/* Header */}
-      <Header user={mockUser} variant="user" />
+      <Header user={user ?? mockUser} variant="user" />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -222,7 +222,7 @@ export default function TicketsPage() {
           {/* Tickets Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Tickets ({filteredTickets.length})</CardTitle>
+              <CardTitle>Tickets {isLoading ? "(Loading...)" : `(${filteredTickets.length})`}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">

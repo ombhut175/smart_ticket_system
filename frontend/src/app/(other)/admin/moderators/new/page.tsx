@@ -12,16 +12,13 @@ import { ArrowLeft, ArrowRight, UserPlus, Plus, Trash2, CheckCircle, Shield, Loa
 
 // Add these imports at the top
 import { User } from "@/types";
+import { userService } from "@/services/user.service";
+import { toast } from "sonner";
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { SidebarNav } from "@/components/navigation/sidebar-nav"
 
-const mockAdmin: User = {
-  name: "System Admin",
-  email: "admin@company.com",
-  role: "Admin",
-  avatar: "",
-}
+const mockAdmin: User = { name: "", email: "", role: "admin", is_active: true, is_email_verified: false, is_profile_completed: false, id: "", created_at: "", updated_at: "" }
 
 interface Skill {
   id: string
@@ -86,32 +83,32 @@ export default function PromoteModeratorPage() {
     if (!validateStep1()) return
 
     setIsLoading(true)
-
-    // Simulate API call to find user
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    // Mock user found
-    setFormData((prev) => ({
-      ...prev,
-      userFound: true,
-      userName: "John Doe",
-      userEmail: formData.email,
-    }))
-
-    setIsLoading(false)
-    setCurrentStep(2)
+    try {
+      // We don't have a direct endpoint to find by email; proceed to step 2 assuming email exists.
+      setFormData((prev) => ({ ...prev, userFound: true, userName: formData.email.split("@")[0], userEmail: formData.email }))
+      setCurrentStep(2)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleStep2Submit = async () => {
     if (!validateStep2()) return
 
     setIsLoading(true)
-
-    // Simulate API call to promote user
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    setIsLoading(false)
-    setIsSuccess(true)
+    try {
+      const payload = skills.map((s) => ({
+        skill_name: s.name.trim(),
+        proficiency_level: (s.proficiency.toLowerCase() as any) || "beginner",
+      }))
+      await userService.promoteModerator(formData.email, payload)
+      setIsSuccess(true)
+      toast.success("User promoted to moderator")
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to promote moderator")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const addSkill = () => {

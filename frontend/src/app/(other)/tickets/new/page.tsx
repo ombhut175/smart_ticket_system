@@ -11,20 +11,19 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Ticket, Send, Loader2, CheckCircle } from "lucide-react"
+import { ticketService } from "@/services/ticket.service"
+import { toast } from "sonner"
+import { useAuth } from "@/contexts/AuthContext"
 
 // Add these imports at the top
 import { User } from "@/types";
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 
-const mockUser: User = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  role: "User",
-  avatar: "",
-}
+const mockUser: User = { name: "", email: "", role: "user", is_active: true, is_email_verified: false, is_profile_completed: false, id: "", created_at: "", updated_at: "" }
 
 export default function NewTicketPage() {
+  const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -72,16 +71,19 @@ export default function NewTicketPage() {
 
     setIsSubmitting(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    setIsSubmitting(false)
-    setIsSuccess(true)
-
-    // Redirect to tickets page after 2 seconds
-    setTimeout(() => {
-      router.push("/tickets")
-    }, 2000)
+    try {
+      await ticketService.createTicket({
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+      })
+      setIsSuccess(true)
+      toast.success("Ticket created successfully")
+      setTimeout(() => router.push("/tickets"), 1000)
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to create ticket")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -122,7 +124,7 @@ export default function NewTicketPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-indigo-900/20">
       {/* Header */}
-      <Header user={mockUser} variant="user" />
+      <Header user={user ?? mockUser} variant="user" />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
