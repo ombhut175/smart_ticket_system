@@ -81,7 +81,10 @@ describe('TicketsController', () => {
 
       expect(service.create).toHaveBeenCalledWith(createDto, mockUser.id);
       expect(result).toEqual(
-        ApiResponseHelper.created(mockTicket, 'Ticket created and processing started')
+        ApiResponseHelper.created(
+          mockTicket,
+          'Ticket created and processing started',
+        ),
       );
     });
 
@@ -89,7 +92,9 @@ describe('TicketsController', () => {
       const error = new Error('Service error');
       service.create.mockRejectedValue(error);
 
-      await expect(controller.create(createDto, mockRequest as any)).rejects.toThrow(error);
+      await expect(
+        controller.create(createDto, mockRequest as any),
+      ).rejects.toThrow(error);
     });
   });
 
@@ -109,19 +114,31 @@ describe('TicketsController', () => {
       expect(service.findAllByUser).toHaveBeenCalledWith(mockUser.id, query);
       expect(service.findAllForModerator).not.toHaveBeenCalled();
       expect(result).toEqual(
-        ApiResponseHelper.success(mockTickets, 'Tickets retrieved successfully')
+        ApiResponseHelper.success(
+          mockTickets,
+          'Tickets retrieved successfully',
+        ),
       );
     });
 
     it('should return all tickets for moderator', async () => {
       service.findAllForModerator.mockResolvedValue(mockTickets as any);
 
-      const result = await controller.findAll(mockModeratorRequest as any, query);
+      const result = await controller.findAll(
+        mockModeratorRequest as any,
+        query,
+      );
 
-      expect(service.findAllForModerator).toHaveBeenCalledWith(mockModerator.role, query);
+      expect(service.findAllForModerator).toHaveBeenCalledWith(
+        mockModerator.role,
+        query,
+      );
       expect(service.findAllByUser).not.toHaveBeenCalled();
       expect(result).toEqual(
-        ApiResponseHelper.success(mockTickets, 'Tickets retrieved successfully')
+        ApiResponseHelper.success(
+          mockTickets,
+          'Tickets retrieved successfully',
+        ),
       );
     });
   });
@@ -136,7 +153,7 @@ describe('TicketsController', () => {
 
       expect(service.findById).toHaveBeenCalledWith(ticketId, mockUser);
       expect(result).toEqual(
-        ApiResponseHelper.success(mockTicket, 'Ticket retrieved successfully')
+        ApiResponseHelper.success(mockTicket, 'Ticket retrieved successfully'),
       );
     });
 
@@ -144,7 +161,9 @@ describe('TicketsController', () => {
       const error = new Error('Ticket not found');
       service.findById.mockRejectedValue(error);
 
-      await expect(controller.findOne(ticketId, mockRequest as any)).rejects.toThrow(error);
+      await expect(
+        controller.findOne(ticketId, mockRequest as any),
+      ).rejects.toThrow(error);
     });
   });
 
@@ -163,11 +182,19 @@ describe('TicketsController', () => {
       const updatedTicket = { ...mockTicket, ...updateDto };
       service.updateTicket.mockResolvedValue(updatedTicket as any);
 
-      const result = await controller.update(ticketId, updateDto, mockModeratorRequest as any);
+      const result = await controller.update(
+        ticketId,
+        updateDto,
+        mockModeratorRequest as any,
+      );
 
-      expect(service.updateTicket).toHaveBeenCalledWith(ticketId, updateDto, mockModerator);
+      expect(service.updateTicket).toHaveBeenCalledWith(
+        ticketId,
+        updateDto,
+        mockModerator,
+      );
       expect(result).toEqual(
-        ApiResponseHelper.success(updatedTicket, 'Ticket updated successfully')
+        ApiResponseHelper.success(updatedTicket, 'Ticket updated successfully'),
       );
     });
 
@@ -176,10 +203,10 @@ describe('TicketsController', () => {
       service.updateTicket.mockRejectedValue(error);
 
       await expect(
-        controller.update(ticketId, updateDto, mockModeratorRequest as any)
+        controller.update(ticketId, updateDto, mockModeratorRequest as any),
       ).rejects.toThrow(error);
     });
   });
 
   //#endregion
-}); 
+});

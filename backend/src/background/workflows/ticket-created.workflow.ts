@@ -1,12 +1,12 @@
 import { NonRetriableError } from 'inngest';
-import { 
-  TICKET_STATUS, 
-  TABLES, 
-  TABLE_COLUMNS, 
-  INNGEST_CONFIG, 
-  INNGEST_STEPS, 
+import {
+  TICKET_STATUS,
+  TABLES,
+  TABLE_COLUMNS,
+  INNGEST_CONFIG,
+  INNGEST_STEPS,
   INNGEST_EVENTS,
-  MESSAGES 
+  MESSAGES,
 } from '../../common/helpers/string-const';
 import { InngestService } from '../inngest.service';
 import { DatabaseRepository } from '../../core/database/database.repository';
@@ -48,15 +48,26 @@ export const createTicketCreatedWorkflow = (
           console.log(`✅ Ticket status updated to TODO`);
         });
 
-        // Step 3: AI processing
-        const relatedSkills = await step.run(INNGEST_STEPS.AI_PROCESSING as string, async () => {
-          console.log(`🤖 Starting AI analysis for ticket: ${ticket.title}`);
-          const aiResponse = await aiService.analyzeTicket(ticket.title, ticket.description);
-          if (aiResponse) {
-            console.log(`🧠 AI analysis complete. Priority: ${aiResponse.priority}, Skills: ${aiResponse.relatedSkills?.join(', ')}`);
-            const validPriority = ['low', 'medium', 'high'].includes(aiResponse.priority)
-              ? aiResponse.priority
-              : 'medium';
+          // Step 3: AI processing
+          const relatedSkills = await step.run(
+            INNGEST_STEPS.AI_PROCESSING as string,
+            async () => {
+              console.log(
+                `🤖 Starting AI analysis for ticket: ${ticket.title}`,
+              );
+              const aiResponse = await aiService.analyzeTicket(
+                ticket.title,
+                ticket.description,
+              );
+              if (aiResponse) {
+                console.log(
+                  `🧠 AI analysis complete. Priority: ${aiResponse.priority}, Skills: ${aiResponse.relatedSkills?.join(', ')}`,
+                );
+                const validPriority = ['low', 'medium', 'high'].includes(
+                  aiResponse.priority,
+                )
+                  ? aiResponse.priority
+                  : 'medium';
 
             await dbRepo.updateTicket(ticket.id, {
               priority: validPriority,
@@ -72,27 +83,36 @@ export const createTicketCreatedWorkflow = (
           return [];
         });
 
-        // Step 4: Assign moderator
-        const moderator = await step.run(INNGEST_STEPS.ASSIGN_MODERATOR as string, async () => {
-          return assignmentService.assignModeratorToTicket(ticket.id, relatedSkills);
-        });
+          // Step 4: Assign moderator
+          const moderator = await step.run(
+            INNGEST_STEPS.ASSIGN_MODERATOR as string,
+            async () => {
+              return assignmentService.assignModeratorToTicket(
+                ticket.id,
+                relatedSkills,
+              );
+            },
+          );
 
-        // Step 5: Email notification
-        await step.run(INNGEST_STEPS.SEND_EMAIL_NOTIFICATION as string, async () => {
-          if (moderator) {
-            await emailService.sendTicketAssignmentNotification(
-              moderator.email,
-              ticket.title,
-              ticket.id,
-            );
-          }
-        });
+          // Step 5: Email notification
+          await step.run(
+            INNGEST_STEPS.SEND_EMAIL_NOTIFICATION as string,
+            async () => {
+              if (moderator) {
+                await emailService.sendTicketAssignmentNotification(
+                  moderator.email,
+                  ticket.title,
+                  ticket.id,
+                );
+              }
+            },
+          );
 
-        return { success: true, ticketId, assignedTo: moderator?.userId };
-      } catch (error) {
-        console.error(`❌ ${MESSAGES.WORKFLOW_ERROR}`, error);
-        return { success: false, error: (error as any).message };
-      }
-    },
-  );
-}; 
+          return { success: true, ticketId, assignedTo: moderator?.userId };
+        } catch (error) {
+          console.error(`❌ ${MESSAGES.WORKFLOW_ERROR}`, error);
+          return { success: false, error: (error as any).message };
+        }
+      },
+    );
+};

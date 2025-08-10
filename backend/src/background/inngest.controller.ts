@@ -17,4 +17,4 @@ export class InngestController {
 
     return handler(req, res);
   }
-} 
+}

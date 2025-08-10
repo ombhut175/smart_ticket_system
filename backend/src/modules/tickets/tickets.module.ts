@@ -17,4 +17,4 @@ import { AuthModule } from '../auth/auth.module';
   providers: [TicketsService],
   exports: [TicketsService],
 })
-export class TicketsModule {} 
+export class TicketsModule {}

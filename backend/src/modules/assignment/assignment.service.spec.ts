@@ -66,4 +66,4 @@ describe('AssignmentService', () => {
     const res = await service.assignModeratorToTicket('ticket-1', ['React']);
     expect(res).toBeNull();
   });
-}); 
+});

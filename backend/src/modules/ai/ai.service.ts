@@ -12,7 +12,9 @@ export class AiService {
   constructor(private readonly configService: ConfigService) {
     const geminiApiKey = this.configService.get<string>(ENV.GEMINI_API_KEY);
     if (!geminiApiKey) {
-      this.logger.warn(`${ENV.GEMINI_API_KEY} is missing – AI analysis will be disabled.`);
+      this.logger.warn(
+        `${ENV.GEMINI_API_KEY} is missing – AI analysis will be disabled.`,
+      );
     }
 
     this.genAI = new GoogleGenerativeAI(geminiApiKey || 'test-key');
@@ -62,19 +64,22 @@ Ticket information:
 - Description: ${description}`;
   }
 
-  async analyzeTicket(title: string, description: string): Promise<TicketAnalysis | null> {
+  async analyzeTicket(
+    title: string,
+    description: string,
+  ): Promise<TicketAnalysis | null> {
     try {
-      const model = this.genAI.getGenerativeModel({ 
+      const model = this.genAI.getGenerativeModel({
         model: AI_CONFIG.MODEL,
-        systemInstruction: this.getSystemPrompt()
+        systemInstruction: this.getSystemPrompt(),
       });
-      
+
       const taskPrompt = this.getTaskPrompt(title, description);
 
       const result = await model.generateContent(taskPrompt);
       const response = await result.response;
       const raw = response.text();
-      
+
       try {
         const match = raw.match(/```json\s*([\s\S]*?)\s*```/i);
         const jsonString = match ? match[1] : raw.trim();
@@ -88,4 +93,4 @@ Ticket information:
       return null;
     }
   }
-} 
+}

@@ -31,7 +31,10 @@ export class AppController {
   }
 
   @Get('test')
-  @ApiOperation({ summary: 'Test route', description: 'Returns a test message for Swagger documentation.' })
+  @ApiOperation({
+    summary: 'Test route',
+    description: 'Returns a test message for Swagger documentation.',
+  })
   @ApiResponse({ status: 200, description: 'Test route is working.' })
   testRoute(): string {
     return 'Swagger test route is working!';

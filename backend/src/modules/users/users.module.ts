@@ -10,4 +10,4 @@ import { RolesGuard } from '../../common/guards/roles.guard';
   controllers: [UsersController],
   providers: [UsersService, RolesGuard],
 })
-export class UsersModule {} 
+export class UsersModule {}

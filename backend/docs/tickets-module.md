@@ -4,6 +4,10 @@
 **Version:** 1.0  
 **Authentication:** Required for all endpoints (HTTP-only cookie)  
 
+Notes:
+- Send `Content-Type: application/json` for requests with bodies
+- Authentication accepted via HTTP-only cookie (`supabaseToken`) or `Authorization: Bearer <token>` header
+
 ## Overview
 
 The Tickets module handles support ticket creation, management, and workflow automation. It provides endpoints for users to create and track their tickets, and for moderators/admins to manage all tickets in the system. The module includes AI-powered ticket analysis, automatic assignment, and comprehensive status tracking.
@@ -129,7 +133,7 @@ interface TicketQueryParams {
   page?: number;        // Page number (starts from 1), default: 1
   limit?: number;       // Items per page (1-100), default: 20
   status?: "todo" | "in_progress" | "waiting_for_customer" | "resolved" | "closed" | "cancelled";
-  priority?: "low" | "medium" | "high";
+  priority?: "low" | "medium" | "high"; // Note: API responses may contain "urgent" (set by AI). Filtering by "urgent" is not currently supported.
   assigned_to?: string; // UUID of assigned user (for moderator/admin views)
 }
 ```
@@ -460,7 +464,7 @@ interface Ticket {
   title: string;                 // 5-200 characters
   description: string;           // 10-5000 characters
   status: "todo" | "in_progress" | "waiting_for_customer" | "resolved" | "closed" | "cancelled";
-  priority: "low" | "medium" | "high";
+  priority: "low" | "medium" | "high" | "urgent"; // "urgent" can be assigned by AI analysis
   created_by: string;            // UUID of creator
   assigned_to?: string;          // UUID of assigned moderator
   summary?: string;              // AI-generated summary

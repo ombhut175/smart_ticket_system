@@ -37,4 +37,4 @@ export class BackgroundService implements OnModuleInit {
   getInngestClient() {
     return this.inngestService.getClient();
   }
-} 
+}

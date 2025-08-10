@@ -8,9 +8,15 @@ import { DatabaseModule } from '../core/database/database.module';
 import { InngestController } from './inngest.controller';
 
 @Module({
-  imports: [InngestModule, AiModule, AssignmentModule, EmailModule, DatabaseModule],
+  imports: [
+    InngestModule,
+    AiModule,
+    AssignmentModule,
+    EmailModule,
+    DatabaseModule,
+  ],
   providers: [BackgroundService],
   controllers: [InngestController],
   exports: [BackgroundService, InngestModule],
 })
-export class BackgroundModule {} 
+export class BackgroundModule {}

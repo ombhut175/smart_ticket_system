@@ -9,4 +9,4 @@ export interface UserSkill {
   skill_name: string;
   proficiency_level: `${SKILL_PROFICIENCY}`;
   created_at: string | Date;
-} 
+}

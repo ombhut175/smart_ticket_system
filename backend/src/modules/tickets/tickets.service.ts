@@ -5,17 +5,17 @@ import { Ticket } from './interfaces/ticket.interface';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { TicketQueryDto } from './dto/ticket-query.dto';
-import { 
-  TABLES, 
-  TICKET_STATUS, 
-  INNGEST_EVENTS, 
-  TICKET_DEFAULTS, 
+import {
+  TABLES,
+  TICKET_STATUS,
+  INNGEST_EVENTS,
+  TICKET_DEFAULTS,
   USER_ROLES,
   QUERY_SELECTORS,
   TABLE_COLUMNS,
   MESSAGES,
   LOG_MESSAGES,
-  interpolateMessage
+  interpolateMessage,
 } from '../../common/helpers/string-const';
 
 @Injectable()
@@ -29,13 +29,18 @@ export class TicketsService {
 
   //#region ==================== TICKET CREATION ====================
 
-  async create(createTicketDto: CreateTicketDto, userId: string): Promise<Ticket> {
+  async create(
+    createTicketDto: CreateTicketDto,
+    userId: string,
+  ): Promise<Ticket> {
     // Log ticket creation start
-    this.logger.log(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_STARTED, { 
-      userId, 
-      title: createTicketDto.title 
-    }));
-    
+    this.logger.log(
+      interpolateMessage(LOG_MESSAGES.TICKET_CREATE_STARTED, {
+        userId,
+        title: createTicketDto.title,
+      }),
+    );
+
     try {
       // Insert ticket into database using Drizzle
       const ticket = await this.dbRepo.createTicketCompat(
@@ -70,7 +75,10 @@ export class TicketsService {
       
       return ticket;
     } catch (error) {
-      this.logger.error(interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }), error);
+      this.logger.error(
+        interpolateMessage(LOG_MESSAGES.TICKET_CREATE_FAILED, { userId }),
+        error,
+      );
       throw error;
     }
   }
@@ -79,7 +87,15 @@ export class TicketsService {
 
   //#region ==================== TICKET RETRIEVAL ====================
 
-  async findAllByUser(userId: string, query?: TicketQueryDto): Promise<{ tickets: Ticket[], total: number, page: number, limit: number }> {
+  async findAllByUser(
+    userId: string,
+    query?: TicketQueryDto,
+  ): Promise<{
+    tickets: Ticket[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const page = query?.page || 1;
     const limit = query?.limit || TICKET_DEFAULTS.PAGE_SIZE;
     const offset = (page - 1) * limit;
@@ -220,8 +236,13 @@ export class TicketsService {
       throw new BadRequestException(MESSAGES.TICKET_DELETE_FAILED);
     }
 
-    this.logger.log(interpolateMessage(MESSAGES.TICKET_DELETED_SUCCESS, { id, userId: user.id }));
+    this.logger.log(
+      interpolateMessage(MESSAGES.TICKET_DELETED_SUCCESS, {
+        id,
+        userId: user.id,
+      }),
+    );
   }
 
   //#endregion
-} 
+}

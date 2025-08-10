@@ -3,4 +3,4 @@ export interface TicketAnalysis {
   priority: 'low' | 'medium' | 'high';
   helpfulNotes: string;
   relatedSkills: string[];
-} 
+}

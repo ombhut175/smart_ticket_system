@@ -1,12 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { TicketsService } from './tickets.service';
 import { SupabaseService } from '../../core/database/supabase.client';
 import { InngestService } from '../../background/inngest.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { TicketQueryDto } from './dto/ticket-query.dto';
-import { TABLES, TICKET_STATUS, INNGEST_EVENTS } from '../../common/helpers/string-const';
+import {
+  TABLES,
+  TICKET_STATUS,
+  INNGEST_EVENTS,
+} from '../../common/helpers/string-const';
 
 describe('TicketsService', () => {
   let service: TicketsService;
@@ -90,7 +98,9 @@ describe('TicketsService', () => {
 
       const result = await service.create(createDto, mockUser.id);
 
-      expect(supabaseService.getClient().from).toHaveBeenCalledWith(TABLES.TICKETS);
+      expect(supabaseService.getClient().from).toHaveBeenCalledWith(
+        TABLES.TICKETS,
+      );
       expect(mockSupabaseClient.insert).toHaveBeenCalledWith({
         title: createDto.title,
         description: createDto.description,
@@ -116,7 +126,9 @@ describe('TicketsService', () => {
         error: { message: 'Database error' },
       });
 
-      await expect(service.create(createDto, mockUser.id)).rejects.toThrow(BadRequestException);
+      await expect(service.create(createDto, mockUser.id)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should handle Inngest event emission failure gracefully', async () => {
@@ -145,9 +157,12 @@ describe('TicketsService', () => {
       const result = await service.findAllByUser(mockUser.id);
 
       expect(mockSupabaseClient.select).toHaveBeenCalledWith(
-        'id, title, description, status, priority, created_at, summary'
+        'id, title, description, status, priority, created_at, summary',
       );
-      expect(mockSupabaseClient.eq).toHaveBeenCalledWith('created_by', mockUser.id);
+      expect(mockSupabaseClient.eq).toHaveBeenCalledWith(
+        'created_by',
+        mockUser.id,
+      );
       expect(result).toEqual(mockTickets);
     });
 
@@ -160,7 +175,10 @@ describe('TicketsService', () => {
 
       await service.findAllByUser(mockUser.id, query);
 
-      expect(mockSupabaseClient.eq).toHaveBeenCalledWith('status', 'in_progress');
+      expect(mockSupabaseClient.eq).toHaveBeenCalledWith(
+        'status',
+        'in_progress',
+      );
     });
 
     it('should throw BadRequestException on database error', async () => {
@@ -169,7 +187,9 @@ describe('TicketsService', () => {
         error: { message: 'Database error' },
       });
 
-      await expect(service.findAllByUser(mockUser.id)).rejects.toThrow(BadRequestException);
+      await expect(service.findAllByUser(mockUser.id)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -183,12 +203,16 @@ describe('TicketsService', () => {
 
       const result = await service.findAllForModerator(mockModerator.role);
 
-      expect(mockSupabaseClient.select).toHaveBeenCalledWith(expect.stringContaining('assignee:assigned_to'));
+      expect(mockSupabaseClient.select).toHaveBeenCalledWith(
+        expect.stringContaining('assignee:assigned_to'),
+      );
       expect(result).toEqual(mockTickets);
     });
 
     it('should throw ForbiddenException for regular user', async () => {
-      await expect(service.findAllForModerator('user')).rejects.toThrow(ForbiddenException);
+      await expect(service.findAllForModerator('user')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -202,7 +226,10 @@ describe('TicketsService', () => {
       const result = await service.findById(mockTicket.id, mockUser);
 
       expect(mockSupabaseClient.eq).toHaveBeenCalledWith('id', mockTicket.id);
-      expect(mockSupabaseClient.eq).toHaveBeenCalledWith('created_by', mockUser.id);
+      expect(mockSupabaseClient.eq).toHaveBeenCalledWith(
+        'created_by',
+        mockUser.id,
+      );
       expect(result).toEqual(mockTicket);
     });
 
@@ -214,7 +241,9 @@ describe('TicketsService', () => {
 
       const result = await service.findById(mockTicket.id, mockModerator);
 
-      expect(mockSupabaseClient.select).toHaveBeenCalledWith(expect.stringContaining('assignee:assigned_to'));
+      expect(mockSupabaseClient.select).toHaveBeenCalledWith(
+        expect.stringContaining('assignee:assigned_to'),
+      );
       expect(result).toEqual(mockTicket);
     });
 
@@ -224,7 +253,9 @@ describe('TicketsService', () => {
         error: { message: 'Not found' },
       });
 
-      await expect(service.findById('nonexistent', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findById('nonexistent', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -245,7 +276,11 @@ describe('TicketsService', () => {
         error: null,
       });
 
-      const result = await service.updateTicket(mockTicket.id, updateDto, mockModerator);
+      const result = await service.updateTicket(
+        mockTicket.id,
+        updateDto,
+        mockModerator,
+      );
 
       expect(mockSupabaseClient.update).toHaveBeenCalledWith({
         ...updateDto,
@@ -255,8 +290,9 @@ describe('TicketsService', () => {
     });
 
     it('should throw ForbiddenException for regular user', async () => {
-      await expect(service.updateTicket(mockTicket.id, updateDto, mockUser))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.updateTicket(mockTicket.id, updateDto, mockUser),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw NotFoundException when ticket not found', async () => {
@@ -265,10 +301,11 @@ describe('TicketsService', () => {
         error: { message: 'Not found' },
       });
 
-      await expect(service.updateTicket('nonexistent', updateDto, mockModerator))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateTicket('nonexistent', updateDto, mockModerator),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   //#endregion
-}); 
+});

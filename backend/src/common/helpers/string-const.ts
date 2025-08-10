@@ -36,13 +36,13 @@ export enum TABLE_COLUMNS {
   LAST_NAME = 'last_name',
   IS_ACTIVE = 'is_active',
   LAST_LOGIN_AT = 'last_login_at',
-  
+
   // User skills table columns
   USER_ID = 'user_id',
   SKILL_NAME = 'skill_name',
   PROFICIENCY_LEVEL = 'proficiency_level',
   SKILLS = 'skills',
-  
+
   // Tickets table columns
   TITLE = 'title',
   DESCRIPTION = 'description',
@@ -84,7 +84,7 @@ export enum MESSAGES {
   USER_LOGGED_OUT_SUCCESS = 'User logged out successfully',
   MISSING_AUTH_TOKEN = 'Missing authentication token',
   INVALID_OR_EXPIRED_TOKEN = 'Invalid or expired token',
-  
+
   // General Messages
   SUCCESS = 'Success',
   CREATED = 'Created',
@@ -96,14 +96,14 @@ export enum MESSAGES {
   ACCESS_DENIED = 'Access denied',
   BAD_REQUEST = 'Bad request',
   INTERNAL_SERVER_ERROR = 'Internal server error',
-  
+
   // User Management Messages
   USER_NOT_FOUND_BY_EMAIL = 'User with email {email} not found',
   USER_ALREADY_MODERATOR = 'User {email} is already a moderator',
   CANNOT_DEMOTE_ADMIN = 'Cannot change admin user {email} to moderator',
   USER_PROFILE_NOT_FOUND = 'User profile not found',
   USER_ACCOUNT_DEACTIVATED = 'User account is deactivated',
-  
+
   // Ticket Management Messages
   TICKET_NOT_FOUND = 'Ticket not found',
   TICKET_UPDATE_FAILED = 'Ticket not found or update failed',
@@ -111,7 +111,7 @@ export enum MESSAGES {
   TICKET_DELETED_SUCCESS = 'Ticket deleted successfully: {id} by user: {userId}',
   ONLY_MODERATORS_CAN_UPDATE = 'Only moderators can update tickets',
   ONLY_MODERATORS_CAN_DELETE = 'Only moderators and admins can delete tickets',
-  
+
   // Background Processing Messages
   EMAIL_SENT_SUCCESS = 'Email sent to {email} for ticket {ticketId}',
   EMAIL_SEND_FAILED = 'Failed to send email',
@@ -228,11 +228,11 @@ export enum LOG_MESSAGES {
   VALIDATION_ENABLED = '✅ Global validation pipe enabled',
   EXCEPTION_FILTER_ENABLED = '🛡️ Global exception filter enabled for standardized responses',
   COOKIE_PARSER_ENABLED = '🍪 Cookie parser middleware enabled',
-  
+
   // Environment messages
   ENVIRONMENT_MODE = '🏗️ Running in {mode} mode',
   PORT_CONFIG = '⚙️ Port configuration: {port}',
-  
+
   // Startup summary
   STARTUP_COMPLETE = '✨ Application startup completed successfully',
   READY_FOR_REQUESTS = '🎯 Ready to handle incoming requests',
@@ -338,8 +338,14 @@ export type UserRole = `${USER_ROLES}`;
  * @param variables - Object with key-value pairs to replace in template
  * @returns Interpolated message string
  */
-export function interpolateMessage(template: string, variables: Record<string, string>): string {
-  return template.replace(/\{(\w+)\}/g, (match, key) => variables[key] || match);
+export function interpolateMessage(
+  template: string,
+  variables: Record<string, string>,
+): string {
+  return template.replace(
+    /\{(\w+)\}/g,
+    (match, key) => variables[key] || match,
+  );
 }
 
 export enum TICKET_DEFAULTS {
@@ -365,4 +371,4 @@ export function getModeratorAndAdminRoles(): string[] {
  */
 export function getAllUserRoles(): string[] {
   return [USER_ROLES.USER, USER_ROLES.MODERATOR, USER_ROLES.ADMIN];
-} 
+}
