@@ -10,7 +10,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { User } from "@/types";
+import { User, Ticket } from "@/types"
+import { useAuth } from "@/contexts/AuthContext"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
+import { ticketService } from "@/services/ticket.service"
+import { toast } from "sonner"
+import { DashboardSkeleton } from "@/components/loading-skeleton"
 
 interface ExtendedUser extends User {
   profileComplete: boolean;
@@ -19,134 +24,73 @@ interface ExtendedUser extends User {
   resolvedTickets: number;
 }
 
-// Mock data for demonstration
-const mockTickets = [
-  {
-    id: "TK-001",
-    title: "Login issues with mobile app",
-    status: "Open",
-    lastUpdated: "2 hours ago",
-    priority: "High",
-    urgency: "critical",
-  },
-  {
-    id: "TK-002",
-    title: "Feature request: Dark mode",
-    status: "In Progress",
-    lastUpdated: "1 day ago",
-    priority: "Medium",
-    urgency: "normal",
-  },
-  {
-    id: "TK-003",
-    title: "Payment processing error",
-    status: "Resolved",
-    lastUpdated: "3 days ago",
-    priority: "High",
-    urgency: "high",
-  },
-  {
-    id: "TK-004",
-    title: "Account verification help",
-    status: "Open",
-    lastUpdated: "5 days ago",
-    priority: "Low",
-    urgency: "low",
-  },
-  {
-    id: "TK-005",
-    title: "Data export functionality",
-    status: "In Progress",
-    lastUpdated: "1 week ago",
-    priority: "Medium",
-    urgency: "normal",
-  },
-]
-
-const mockUser: ExtendedUser = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  role: "User",
-  avatar: "",
-  profileComplete: false,
-  memberSince: "January 2024",
-  totalTickets: 12,
-  resolvedTickets: 8,
-}
-
-const stats = [
-  {
-    label: "Total Tickets",
-    value: mockTickets.length,
-    change: "+12%",
-    trend: "up",
-    icon: Circle,
-    color: "blue",
-  },
-  {
-    label: "Open",
-    value: mockTickets.filter((t) => t.status === "Open").length,
-    change: "-8%",
-    trend: "down",
-    icon: Circle,
-    color: "red",
-  },
-  {
-    label: "In Progress",
-    value: mockTickets.filter((t) => t.status === "In Progress").length,
-    change: "+25%",
-    trend: "up",
-    icon: Clock,
-    color: "yellow",
-  },
-  {
-    label: "Resolved",
-    value: mockTickets.filter((t) => t.status === "Resolved").length,
-    change: "+18%",
-    trend: "up",
-    icon: CheckCircle,
-    color: "green",
-  },
-]
 
 function StatusBadge({ status, urgency }: { status: string; urgency?: string }): JSX.Element {
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case "Open":
+      case "todo":
         return {
           color: "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800",
           icon: Circle,
           pulse: urgency === "critical",
+          label: "Open",
         }
-      case "In Progress":
+      case "in_progress":
         return {
           color:
             "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800",
           icon: Clock,
           pulse: false,
+          label: "In Progress",
         }
-      case "Resolved":
+      case "waiting_for_customer":
+        return {
+          color:
+            "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800",
+          icon: Circle,
+          pulse: false,
+          label: "Waiting for Customer",
+        }
+      case "resolved":
         return {
           color:
             "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800",
           icon: CheckCircle,
           pulse: false,
+          label: "Resolved",
+        }
+      case "closed":
+        return {
+          color:
+            "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800",
+          icon: CheckCircle,
+          pulse: false,
+          label: "Closed",
+        }
+      case "cancelled":
+        return {
+          color:
+            "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800",
+          icon: Circle,
+          pulse: false,
+          label: "Cancelled",
         }
       default:
         return {
           color: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
           icon: Circle,
           pulse: false,
+          label: "Unknown",
         }
     }
   }
 
-  const { color, icon: Icon, pulse } = getStatusConfig(status)
+  const { color, icon: Icon, pulse, label } = getStatusConfig(status)
 
   return (
     <Badge className={`${color} border ${pulse ? "animate-pulse" : ""} flex items-center gap-1`}>
       <Icon className="h-3 w-3" />
-      {status}
+      {label}
     </Badge>
   )
 }
@@ -154,35 +98,39 @@ function StatusBadge({ status, urgency }: { status: string; urgency?: string }):
 function PriorityBadge({ priority }: { priority: string }): JSX.Element {
   const getPriorityConfig = (priority: string) => {
     switch (priority) {
-      case "High":
+      case "high":
         return {
           color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
           icon: AlertCircle,
+          label: "High",
         }
-      case "Medium":
+      case "medium":
         return {
           color: "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400",
           icon: Clock,
+          label: "Medium",
         }
-      case "Low":
+      case "low":
         return {
           color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
           icon: Circle,
+          label: "Low",
         }
       default:
         return {
           color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
           icon: Circle,
+          label: "Unknown",
         }
     }
   }
 
-  const { color, icon: Icon } = getPriorityConfig(priority)
+  const { color, icon: Icon, label } = getPriorityConfig(priority)
 
   return (
     <Badge className={`${color} text-xs flex items-center gap-1`}>
       <Icon className="h-3 w-3" />
-      {priority}
+      {label}
     </Badge>
   )
 }
@@ -234,28 +182,80 @@ const ticketVariants: Variants = {
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [ticketsLoading, setTicketsLoading] = useState(true)
+  const { user } = useAuth()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  if (!mounted) return null
+  // Load user's tickets
+  useEffect(() => {
+    const loadTickets = async () => {
+      try {
+        setTicketsLoading(true)
+        const response = await ticketService.getUserTickets({ page: 1, limit: 5 })
+        setTickets(response.data)
+      } catch (error) {
+        toast.error('Failed to load tickets')
+      } finally {
+        setTicketsLoading(false)
+      }
+    }
 
-  const userForHeader: User = {
-    name: mockUser.name,
-    email: mockUser.email,
-    role: mockUser.role,
-    avatar: mockUser.avatar,
-  };
+    if (user) {
+      loadTickets()
+    }
+  }, [user])
+
+  if (!mounted || !user) return <DashboardSkeleton />
+
+  // Calculate stats based on loaded tickets
+  const stats = [
+    {
+      label: "Total Tickets",
+      value: tickets.length,
+      change: "+12%",
+      trend: "up",
+      icon: Circle,
+      color: "blue",
+    },
+    {
+      label: "Open",
+      value: tickets.filter((t) => t.status === "todo").length,
+      change: "-8%",
+      trend: "down",
+      icon: Circle,
+      color: "red",
+    },
+    {
+      label: "In Progress",
+      value: tickets.filter((t) => t.status === "in_progress").length,
+      change: "+25%",
+      trend: "up",
+      icon: Clock,
+      color: "yellow",
+    },
+    {
+      label: "Resolved",
+      value: tickets.filter((t) => t.status === "resolved").length,
+      change: "+18%",
+      trend: "up",
+      icon: CheckCircle,
+      color: "green",
+    },
+  ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-950 dark:via-blue-950/20 dark:to-indigo-950/30">
-      {/* Header */}
-      <Header user={userForHeader} variant="user" />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-950 dark:via-blue-950/20 dark:to-indigo-950/30">
+        {/* Header */}
+        <Header user={user} variant="user" />
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BreadcrumbNav />
+        {/* Main Content */}
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <BreadcrumbNav />
 
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-8">
           {/* Welcome Hero Section */}
@@ -270,7 +270,7 @@ export default function DashboardPage() {
                       transition={{ delay: 0.3, duration: 0.6 }}
                     >
                       <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
-                        Welcome back, <span className="text-yellow-300">{mockUser.name.split(" ")[0]}</span>!
+                        Welcome back, <span className="text-yellow-300">{user.name?.split(" ")[0] || user.first_name || user.email.split('@')[0]}</span>!
                       </h1>
                       <p className="text-xl text-blue-100 leading-relaxed">
                         Manage your support tickets and track their progress with our intelligent dashboard
@@ -311,12 +311,13 @@ export default function DashboardPage() {
                       <div className="flex items-center space-x-4 mb-4">
                         <div className="relative">
                           <Avatar className="h-16 w-16 ring-4 ring-white/20">
-                            <AvatarImage src={mockUser.avatar || "/placeholder.svg"} alt={mockUser.name} />
+                            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name || user.email} />
                             <AvatarFallback className="bg-blue-600 text-white text-xl font-bold">
-                              {mockUser.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
+                              {user.name
+                                ? user.name.split(" ").map((n) => n[0]).join("")
+                                : user.first_name && user.last_name
+                                ? `${user.first_name[0]}${user.last_name[0]}`
+                                : user.email[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
@@ -324,18 +325,18 @@ export default function DashboardPage() {
                           </div>
                         </div>
                         <div className="text-white">
-                          <h3 className="font-semibold text-lg">{mockUser.name}</h3>
-                          <p className="text-blue-100 text-sm">Member since {mockUser.memberSince}</p>
+                          <h3 className="font-semibold text-lg">{user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}</h3>
+                          <p className="text-blue-100 text-sm">Member since {new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 text-center">
                         <div className="bg-white/10 rounded-lg p-3">
-                          <div className="text-2xl font-bold text-white">{mockUser.totalTickets}</div>
+                          <div className="text-2xl font-bold text-white">{tickets.length}</div>
                           <div className="text-blue-100 text-xs">Total Tickets</div>
                         </div>
                         <div className="bg-white/10 rounded-lg p-3">
-                          <div className="text-2xl font-bold text-green-300">{mockUser.resolvedTickets}</div>
+                          <div className="text-2xl font-bold text-green-300">{tickets.filter(t => t.status === 'resolved').length}</div>
                           <div className="text-blue-100 text-xs">Resolved</div>
                         </div>
                       </div>
@@ -416,44 +417,54 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <AnimatePresence>
-                        {mockTickets.map((ticket, index) => (
-                          <motion.div
-                            key={ticket.id}
-                            variants={ticketVariants}
-                            initial="hidden"
-                            animate="visible"
-                            whileHover="hover"
-                            custom={index}
-                            layout
-                          >
-                            <Card className="glass border border-gray-200 dark:border-gray-700 cursor-pointer">
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between">
-                                  <div className="space-y-2 flex-1">
-                                    <div className="flex items-center gap-3">
-                                      <span className="text-sm font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                                        {ticket.id}
-                                      </span>
-                                      <PriorityBadge priority={ticket.priority} />
-                                    </div>
-                                    <h4 className="font-semibold text-gray-900 dark:text-white text-lg leading-tight">
-                                      {ticket.title}
-                                    </h4>
-                                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                      <div className="flex items-center gap-1">
-                                        <Clock className="h-4 w-4" />
-                                        {ticket.lastUpdated}
+                      {ticketsLoading ? (
+                        <div className="space-y-3">
+                          {[...Array(3)].map((_, i) => (
+                            <div key={i} className="animate-pulse">
+                              <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <AnimatePresence>
+                          {tickets.map((ticket, index) => (
+                            <motion.div
+                              key={ticket.id}
+                              variants={ticketVariants}
+                              initial="hidden"
+                              animate="visible"
+                              whileHover="hover"
+                              custom={index}
+                              layout
+                            >
+                              <Card className="glass border border-gray-200 dark:border-gray-700 cursor-pointer">
+                                <CardContent className="p-4">
+                                  <div className="flex items-start justify-between">
+                                    <div className="space-y-2 flex-1">
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-sm font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                                          {ticket.id.slice(0, 8)}
+                                        </span>
+                                        <PriorityBadge priority={ticket.priority} />
+                                      </div>
+                                      <h4 className="font-semibold text-gray-900 dark:text-white text-lg leading-tight">
+                                        {ticket.title}
+                                      </h4>
+                                      <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="h-4 w-4" />
+                                          {new Date(ticket.updated_at).toLocaleDateString()}
+                                        </div>
                                       </div>
                                     </div>
+                                    <StatusBadge status={ticket.status} />
                                   </div>
-                                  <StatusBadge status={ticket.status} urgency={ticket.urgency} />
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -474,24 +485,25 @@ export default function DashboardPage() {
                   <CardContent className="space-y-4">
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-16 w-16 ring-2 ring-blue-100 dark:ring-blue-900">
-                        <AvatarImage src={mockUser.avatar || "/placeholder.svg"} alt={mockUser.name} />
+                        <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name || user.email} />
                         <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-lg font-bold">
-                          {mockUser.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
+                          {user.name
+                            ? user.name.split(" ").map((n) => n[0]).join("")
+                            : user.first_name && user.last_name
+                            ? `${user.first_name[0]}${user.last_name[0]}`
+                            : user.email[0].toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">{mockUser.name}</h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{mockUser.email}</p>
+                        <h4 className="font-semibold text-gray-900 dark:text-white">{user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                         <Badge className="mt-1 bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                          Active Member
+                          {user.is_active ? 'Active Member' : 'Inactive'}
                         </Badge>
                       </div>
                     </div>
 
-                    {!mockUser.profileComplete && (
+                    {!user.is_profile_completed && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -522,7 +534,7 @@ export default function DashboardPage() {
 
               {/* Quick Actions */}
               <motion.div variants={itemVariants}>
-                <QuickActions userRole="User" />
+                <QuickActions userRole={user.role} />
               </motion.div>
 
               {/* Quick Stats */}
@@ -533,16 +545,16 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {[
-                      { label: "Total Tickets", value: mockTickets.length, color: "blue" },
-                      { label: "Open", value: mockTickets.filter((t) => t.status === "Open").length, color: "red" },
+                      { label: "Total Tickets", value: tickets.length, color: "blue" },
+                      { label: "Open", value: tickets.filter((t) => t.status === "todo").length, color: "red" },
                       {
                         label: "In Progress",
-                        value: mockTickets.filter((t) => t.status === "In Progress").length,
+                        value: tickets.filter((t) => t.status === "in_progress").length,
                         color: "yellow",
                       },
                       {
                         label: "Resolved",
-                        value: mockTickets.filter((t) => t.status === "Resolved").length,
+                        value: tickets.filter((t) => t.status === "resolved").length,
                         color: "green",
                       },
                     ].map((stat, index) => (
@@ -565,5 +577,6 @@ export default function DashboardPage() {
         </motion.div>
       </main>
     </div>
+  </ProtectedRoute>
   )
 }
