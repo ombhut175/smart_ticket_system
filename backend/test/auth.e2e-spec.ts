@@ -11,7 +11,7 @@ import { MESSAGES } from '../src/common/helpers/string-const';
  */
 describe('Authentication (e2e)', () => {
   let app: INestApplication;
-  
+
   // Test user data for consistent testing
   const testUser = {
     email: 'test@example.com',
@@ -24,11 +24,11 @@ describe('Authentication (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // Apply same configuration as main.ts
     app.setGlobalPrefix('api');
     app.enableCors({ origin: true, credentials: true });
-    
+
     await app.init();
   });
 
@@ -64,7 +64,7 @@ describe('Authentication (e2e)', () => {
 
     it('should reject signup with invalid email format', async () => {
       const invalidUser = { ...testUser, email: 'invalid-email' };
-      
+
       const response = await request(app.getHttpServer())
         .post('/api/auth/signup')
         .send(invalidUser)
@@ -83,7 +83,7 @@ describe('Authentication (e2e)', () => {
 
     it('should reject signup with short password', async () => {
       const invalidUser = { ...testUser, password: '123' };
-      
+
       await request(app.getHttpServer())
         .post('/api/auth/signup')
         .send(invalidUser)
@@ -92,7 +92,7 @@ describe('Authentication (e2e)', () => {
 
     it('should reject signup with missing required fields', async () => {
       const incompleteUser = { email: testUser.email };
-      
+
       await request(app.getHttpServer())
         .post('/api/auth/signup')
         .send(incompleteUser)
@@ -107,7 +107,7 @@ describe('Authentication (e2e)', () => {
   describe('POST /api/auth/login', () => {
     // Note: These tests would require a real Supabase instance or mocking
     // For MVP, we're focusing on request/response format validation
-    
+
     it('should have correct endpoint structure for login', async () => {
       const response = await request(app.getHttpServer())
         .post('/api/auth/login')
@@ -115,7 +115,7 @@ describe('Authentication (e2e)', () => {
 
       // Should return 401 or 400 (not 404 - endpoint exists)
       expect([400, 401]).toContain(response.status);
-      
+
       // Should follow standardized error format
       expect(response.body).toMatchObject({
         success: false,
@@ -170,9 +170,12 @@ describe('Authentication (e2e)', () => {
       // Check that Set-Cookie header clears the supabaseToken
       const setCookieHeader = response.headers['set-cookie'];
       if (setCookieHeader) {
-        expect(Array.isArray(setCookieHeader) && setCookieHeader.some((cookie: string) => 
-          cookie.includes('supabaseToken=;')
-        )).toBeTruthy();
+        expect(
+          Array.isArray(setCookieHeader) &&
+            setCookieHeader.some((cookie: string) =>
+              cookie.includes('supabaseToken=;'),
+            ),
+        ).toBeTruthy();
       }
     });
   });
@@ -209,4 +212,4 @@ describe('Authentication (e2e)', () => {
   });
 
   //#endregion
-}); 
+});

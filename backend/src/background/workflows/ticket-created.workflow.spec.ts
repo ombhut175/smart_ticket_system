@@ -1,6 +1,6 @@
 import { createTicketCreatedWorkflow } from './ticket-created.workflow';
 import { InngestService } from '../inngest.service';
-import { SupabaseService } from '../../core/database/supabase.client';
+import { TicketsRepository } from '../../core/database/repositories/tickets.repository';
 import { AiService } from '../../modules/ai/ai.service';
 import { AssignmentService } from '../../modules/assignment/assignment.service';
 import { EmailService } from '../../modules/email/email.service';
@@ -14,7 +14,7 @@ describe('ticket-created workflow', () => {
 
     const workflow = createTicketCreatedWorkflow(
       inngestServiceMock,
-      {} as SupabaseService,
+      {} as TicketsRepository,
       {} as AiService,
       {} as AssignmentService,
       {} as EmailService,
@@ -23,4 +23,4 @@ describe('ticket-created workflow', () => {
     expect(createFunctionMock).toHaveBeenCalled();
     // workflow should equal whatever createFunction returned – simulate value
   });
-}); 
+});

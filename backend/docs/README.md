@@ -15,7 +15,7 @@ Welcome to the Smart Ticket System API documentation. This system provides a com
 ## Quick Start Guide
 
 ### Base Configuration
-- **Base URL**: `http://localhost:3000/api`
+- **Base URL**: `http://localhost:8080/api`
 - **Authentication**: HTTP-only cookie (`supabaseToken`)
 - **Content-Type**: `application/json`
 - **Credentials**: `include` (for cookie handling)
@@ -390,22 +390,22 @@ NODE_ENV=development
 ### API Testing with curl
 ```bash
 # Register user
-curl -X POST http://localhost:3000/api/auth/signup \
+curl -X POST http://localhost:8080/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123"}'
 
 # Login (save cookies)
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -c cookies.txt \
   -d '{"email":"test@example.com","password":"password123"}'
 
 # Get profile (use saved cookies)
-curl -X GET http://localhost:3000/api/users/me \
+curl -X GET http://localhost:8080/api/users/me \
   -b cookies.txt
 
 # Create ticket
-curl -X POST http://localhost:3000/api/tickets \
+curl -X POST http://localhost:8080/api/tickets \
   -H "Content-Type: application/json" \
   -b cookies.txt \
   -d '{"title":"Test Issue","description":"This is a test ticket description."}'

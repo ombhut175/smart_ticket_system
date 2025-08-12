@@ -7,4 +7,4 @@ import { DatabaseModule } from '../../core/database/database.module';
   providers: [AssignmentService],
   exports: [AssignmentService],
 })
-export class AssignmentModule {} 
+export class AssignmentModule {}

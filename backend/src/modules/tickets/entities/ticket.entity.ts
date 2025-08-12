@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Ticket } from '../interfaces/ticket.interface';
-import { TICKET_PRIORITY, TICKET_STATUS, USER_ROLES } from '../../../common/helpers/string-const';
+import {
+  TICKET_PRIORITY,
+  TICKET_STATUS,
+  USER_ROLES,
+} from '../../../common/helpers/string-const';
 
 export class TicketEntity implements Ticket {
   @ApiProperty({
@@ -17,7 +21,8 @@ export class TicketEntity implements Ticket {
 
   @ApiProperty({
     description: 'A detailed description of the issue',
-    example: 'When a user tries to login, they are getting a 500 internal server error.',
+    example:
+      'When a user tries to login, they are getting a 500 internal server error.',
   })
   description: string;
 
@@ -26,7 +31,13 @@ export class TicketEntity implements Ticket {
     enum: TICKET_STATUS,
     example: 'in_progress',
   })
-  status: 'todo' | 'in_progress' | 'waiting_for_customer' | 'resolved' | 'closed' | 'cancelled';
+  status:
+    | 'todo'
+    | 'in_progress'
+    | 'waiting_for_customer'
+    | 'resolved'
+    | 'closed'
+    | 'cancelled';
 
   @ApiProperty({
     description: 'The priority of the ticket',
@@ -58,7 +69,8 @@ export class TicketEntity implements Ticket {
   @ApiProperty({
     description: 'AI-generated notes that might help resolve the issue',
     required: false,
-    example: 'The error seems to be related to the authentication service. Check the service logs.',
+    example:
+      'The error seems to be related to the authentication service. Check the service logs.',
   })
   helpful_notes?: string;
 
@@ -79,4 +91,4 @@ export class TicketEntity implements Ticket {
     description: 'The date and time when the ticket was last updated',
   })
   updated_at: Date;
-} 
+}

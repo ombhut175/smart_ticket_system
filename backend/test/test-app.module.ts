@@ -20,4 +20,4 @@ import { UsersModule } from '../src/modules/users/users.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class TestAppModule {} 
+export class TestAppModule {}

@@ -9,7 +9,9 @@ export class SupabaseService {
 
   constructor(private readonly configService: ConfigService) {
     const supabaseUrl = this.configService.get<string>(ENV.SUPABASE_URL);
-    const serviceRoleKey = this.configService.get<string>(ENV.SUPABASE_SERVICE_ROLE_KEY);
+    const serviceRoleKey = this.configService.get<string>(
+      ENV.SUPABASE_SERVICE_ROLE_KEY,
+    );
 
     if (!supabaseUrl || !serviceRoleKey) {
       throw new Error('Missing Supabase environment variables');
@@ -49,4 +51,4 @@ export class SupabaseService {
       },
     });
   }
-} 
+}

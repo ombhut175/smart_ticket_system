@@ -1,10 +1,24 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res, Logger } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+  Logger,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
-import { SWAGGER_TAGS, MESSAGES, API_PATHS, LOG_MESSAGES, interpolateMessage } from '../../common/helpers/string-const';
+import {
+  SWAGGER_TAGS,
+  MESSAGES,
+  API_PATHS,
+  LOG_MESSAGES,
+  interpolateMessage,
+} from '../../common/helpers/string-const';
 import { ApiResponseHelper } from '../../common/helpers/api-response.helper';
 import { CookieHelper } from '../../common/helpers/cookie.helper';
 
@@ -31,12 +45,13 @@ export class AuthController {
    * Supabase Auth returns a user object and (optionally) a session if email confirmation is disabled.
    */
   @Post('signup')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Register a new user account',
-    description: 'Creates a new user account with email/password authentication. Returns user object and optional session information.'
+    description:
+      'Creates a new user account with email/password authentication. Returns user object and optional session information.',
   })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'User account created successfully',
     example: {
       success: true,
@@ -44,37 +59,41 @@ export class AuthController {
       message: 'User signed up successfully',
       data: {
         user: { id: 'uuid', email: 'user@example.com' },
-        session: null
+        session: null,
       },
-      timestamp: '2023-01-01T00:00:00.000Z'
-    }
+      timestamp: '2023-01-01T00:00:00.000Z',
+    },
   })
   async signUp(@Body() signupDto: SignupDto) {
     /**
-     * Process: 
+     * Process:
      * 1. Validate input data through SignupDto class-validator decorators
      * 2. Call AuthService.signUp() which interfaces with Supabase Auth API
      * 3. Supabase creates user record and sends confirmation email if configured
      * 4. Return standardized success response with user data (excluding sensitive info)
      */
-    
+
     // Log endpoint access
-    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
-      method: 'POST',
-      endpoint: '/auth/signup',
-      userId: 'anonymous'
-    }));
-    
-    try {
-      const result = await this.authService.signUp(signupDto);
-      
-      // Log successful signup endpoint completion
-      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+    this.logger.log(
+      interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
         method: 'POST',
         endpoint: '/auth/signup',
-        userId: result.user?.id || 'unknown'
-      }));
-      
+        userId: 'anonymous',
+      }),
+    );
+
+    try {
+      const result = await this.authService.signUp(signupDto);
+
+      // Log successful signup endpoint completion
+      this.logger.log(
+        interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+          method: 'POST',
+          endpoint: '/auth/signup',
+          userId: result.user?.id || 'unknown',
+        }),
+      );
+
       return ApiResponseHelper.created(
         {
           user: {
@@ -84,15 +103,18 @@ export class AuthController {
           },
           session: result.session, // Will be null if email confirmation required
         },
-        MESSAGES.USER_SIGNED_UP_SUCCESS
+        MESSAGES.USER_SIGNED_UP_SUCCESS,
       );
     } catch (error) {
       // Log endpoint failure
-      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
-        method: 'POST',
-        endpoint: '/auth/signup',
-        userId: 'anonymous'
-      }), error);
+      this.logger.error(
+        interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+          method: 'POST',
+          endpoint: '/auth/signup',
+          userId: 'anonymous',
+        }),
+        error,
+      );
       throw error;
     }
   }
@@ -113,12 +135,13 @@ export class AuthController {
    */
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Authenticate user and establish session',
-    description: 'Authenticates user credentials and sets secure HTTP-only cookie with access token. Cookie expires in 7 days and is used for subsequent authenticated requests. Updates last_login_at timestamp in user profile.'
+    description:
+      'Authenticates user credentials and sets secure HTTP-only cookie with access token. Cookie expires in 7 days and is used for subsequent authenticated requests. Updates last_login_at timestamp in user profile.',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'User authenticated successfully and session established',
     example: {
       success: true,
@@ -126,10 +149,10 @@ export class AuthController {
       message: 'User logged in successfully',
       data: {
         user: { id: 'uuid', email: 'user@example.com' },
-        sessionInfo: { expires_at: 1234567890 }
+        sessionInfo: { expires_at: 1234567890 },
       },
-      timestamp: '2023-01-01T00:00:00.000Z'
-    }
+      timestamp: '2023-01-01T00:00:00.000Z',
+    },
   })
   async signIn(
     @Body() loginDto: LoginDto,
@@ -144,14 +167,16 @@ export class AuthController {
      * 5. Store access_token in secure HTTP-only cookie via CookieHelper
      * 6. Return success response with user info (token excluded for security)
      */
-    
+
     // Log endpoint access
-    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
-      method: 'POST',
-      endpoint: '/auth/login',
-      userId: 'anonymous'
-    }));
-    
+    this.logger.log(
+      interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+        method: 'POST',
+        endpoint: '/auth/login',
+        userId: 'anonymous',
+      }),
+    );
+
     try {
       const { session, user } = await this.authService.signIn(loginDto);
 
@@ -162,11 +187,13 @@ export class AuthController {
       }
 
       // Log successful login endpoint completion
-      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
-        method: 'POST',
-        endpoint: '/auth/login',
-        userId: user?.id || 'unknown'
-      }));
+      this.logger.log(
+        interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+          method: 'POST',
+          endpoint: '/auth/login',
+          userId: user?.id || 'unknown',
+        }),
+      );
 
       return ApiResponseHelper.success(
         {
@@ -178,17 +205,20 @@ export class AuthController {
           sessionInfo: {
             expires_at: session?.expires_at,
             token_type: session?.token_type,
-          }
+          },
         },
-        MESSAGES.USER_LOGGED_IN_SUCCESS
+        MESSAGES.USER_LOGGED_IN_SUCCESS,
       );
     } catch (error) {
       // Log endpoint failure
-      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
-        method: 'POST',
-        endpoint: '/auth/login',
-        userId: 'anonymous'
-      }), error);
+      this.logger.error(
+        interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+          method: 'POST',
+          endpoint: '/auth/login',
+          userId: 'anonymous',
+        }),
+        error,
+      );
       throw error;
     }
   }
@@ -207,20 +237,21 @@ export class AuthController {
    */
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Terminate user session and clear authentication',
-    description: 'Logs out the current user by invalidating their session in Supabase and clearing the authentication cookie.'
+    description:
+      'Logs out the current user by invalidating their session in Supabase and clearing the authentication cookie.',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'User logged out successfully and session terminated',
     example: {
       success: true,
       statusCode: 200,
       message: 'User logged out successfully',
       data: null,
-      timestamp: '2023-01-01T00:00:00.000Z'
-    }
+      timestamp: '2023-01-01T00:00:00.000Z',
+    },
   })
   async logout(@Res({ passthrough: true }) res: Response) {
     /**
@@ -231,49 +262,57 @@ export class AuthController {
      * 4. Return success response confirming logout completion
      * Note: Even if no token exists, we return success for security (no information leakage)
      */
-    
+
     // Log endpoint access
-    this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
-      method: 'POST',
-      endpoint: '/auth/logout',
-      userId: 'current_user'
-    }));
-    
+    this.logger.log(
+      interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+        method: 'POST',
+        endpoint: '/auth/logout',
+        userId: 'current_user',
+      }),
+    );
+
     try {
       const token = CookieHelper.getAuthToken(res.req.cookies);
-      
+
       if (token) {
-        this.logger.log('Authentication token found, proceeding with session invalidation');
+        this.logger.log(
+          'Authentication token found, proceeding with session invalidation',
+        );
         await this.authService.signOut(token);
       } else {
-        this.logger.log('No authentication token found, proceeding with cookie cleanup only');
+        this.logger.log(
+          'No authentication token found, proceeding with cookie cleanup only',
+        );
       }
-      
+
       // Always clear cookie regardless of token validity
       CookieHelper.clearAuthToken(res);
       this.logger.log('Authentication cookie cleared');
 
       // Log successful logout endpoint completion
-      this.logger.log(interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
-        method: 'POST',
-        endpoint: '/auth/logout',
-        userId: 'logged_out_user'
-      }));
-
-      return ApiResponseHelper.success(
-        null,
-        MESSAGES.USER_LOGGED_OUT_SUCCESS
+      this.logger.log(
+        interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+          method: 'POST',
+          endpoint: '/auth/logout',
+          userId: 'logged_out_user',
+        }),
       );
+
+      return ApiResponseHelper.success(null, MESSAGES.USER_LOGGED_OUT_SUCCESS);
     } catch (error) {
       // Log endpoint failure
-      this.logger.error(interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
-        method: 'POST',
-        endpoint: '/auth/logout',
-        userId: 'current_user'
-      }), error);
+      this.logger.error(
+        interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+          method: 'POST',
+          endpoint: '/auth/logout',
+          userId: 'current_user',
+        }),
+        error,
+      );
       throw error;
     }
   }
 
   //#endregion
-} 
+}

@@ -5,4 +5,4 @@ import { InngestService } from './inngest.service';
   providers: [InngestService],
   exports: [InngestService],
 })
-export class InngestModule {} 
+export class InngestModule {}
