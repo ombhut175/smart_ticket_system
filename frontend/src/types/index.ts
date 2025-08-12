@@ -29,7 +29,7 @@ export interface Ticket {
   title: string;
   description: string;
   status: "todo" | "in_progress" | "waiting_for_customer" | "resolved" | "closed" | "cancelled";
-  priority: "low" | "medium" | "high";
+  priority: "low" | "medium" | "high" | "urgent";
   created_by: string;
   assigned_to?: string;
   summary?: string;

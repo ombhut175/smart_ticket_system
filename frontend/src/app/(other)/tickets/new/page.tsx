@@ -11,17 +11,15 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Ticket, Send, Loader2, CheckCircle } from "lucide-react"
-
-// Add these imports at the top
-import { User } from "@/types";
+import { ticketService } from "@/services/ticket.service"
+import { toast } from "sonner"
+import { useAuth } from "@/contexts/AuthContext"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { useAuth } from "@/contexts/AuthContext"
-import { ticketService } from "@/services/ticket.service"
-import { toast } from "sonner"
 
 export default function NewTicketPage() {
+  const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -31,7 +29,6 @@ export default function NewTicketPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const router = useRouter()
-  const { user } = useAuth()
 
   useEffect(() => {
     setMounted(true)
@@ -74,16 +71,11 @@ export default function NewTicketPage() {
         title: formData.title.trim(),
         description: formData.description.trim(),
       })
-      
       setIsSuccess(true)
-      toast.success('Ticket created successfully!')
-      
-      // Redirect to tickets page after 2 seconds
-      setTimeout(() => {
-        router.push("/tickets")
-      }, 2000)
+      toast.success("Ticket created successfully!")
+      setTimeout(() => router.push("/tickets"), 1000)
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create ticket')
+      toast.error(error?.message || "Failed to create ticket")
     } finally {
       setIsSubmitting(false)
     }

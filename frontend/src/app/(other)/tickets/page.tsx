@@ -13,10 +13,9 @@ import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useAuth } from "@/contexts/AuthContext"
 import { ticketService } from "@/services/ticket.service"
-import { Ticket, TicketQueryParams } from "@/types"
 import { toast } from "sonner"
+import { Ticket, TicketQueryParams } from "@/types"
 import { DashboardSkeleton } from "@/components/loading-skeleton"
-
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
@@ -85,6 +84,7 @@ function formatDate(dateString: string) {
 }
 
 export default function TicketsPage() {
+  const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
@@ -93,7 +93,6 @@ export default function TicketsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const { user } = useAuth()
 
   useEffect(() => {
     setMounted(true)
@@ -129,14 +128,17 @@ export default function TicketsPage() {
 
   if (!mounted || !user) return <DashboardSkeleton />
 
-  // Filter tickets based on search query (client-side filtering for search)
+  // Filter tickets based on current filters
   const filteredTickets = tickets.filter((ticket) => {
+    const matchesStatus = statusFilter === "all" || ticket.status === statusFilter
+    const matchesPriority =
+      priorityFilter === "all" || ticket.priority.toLowerCase() === priorityFilter.toLowerCase()
     const matchesSearch =
       searchQuery === "" ||
       ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.id.toLowerCase().includes(searchQuery.toLowerCase())
 
-    return matchesSearch
+    return matchesStatus && matchesPriority && matchesSearch
   })
 
   return (
@@ -217,7 +219,7 @@ export default function TicketsPage() {
           {/* Tickets Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Tickets ({filteredTickets.length})</CardTitle>
+              <CardTitle>Tickets {loading ? "(Loading...)" : `(${filteredTickets.length})`}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
