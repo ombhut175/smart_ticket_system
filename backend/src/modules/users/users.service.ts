@@ -4,7 +4,8 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { DatabaseRepository } from '../../core/database/database.repository';
+import { UsersRepository } from '../../core/database/repositories/users.repository';
+import { SkillsRepository } from '../../core/database/repositories/skills.repository';
 import {
   MESSAGES,
   USER_ROLES,
@@ -21,7 +22,10 @@ import { AddUserSkillDto } from './dto/add-user-skill.dto';
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(private readonly dbRepo: DatabaseRepository) {}
+  constructor(
+    private readonly usersRepo: UsersRepository,
+    private readonly skillsRepo: SkillsRepository,
+  ) {}
 
   async getProfile(userId: string) {
     // Log profile fetch start
@@ -30,7 +34,7 @@ export class UsersService {
     );
 
     try {
-      const user = await this.dbRepo.findUserById(userId);
+      const user = await this.usersRepo.findUserById(userId);
 
       if (!user) {
         this.logger.error(`Failed to fetch user profile for user: ${userId}`);
@@ -78,7 +82,7 @@ export class UsersService {
     );
 
     try {
-      const data = await this.dbRepo.updateUserProfile(userId, dto);
+      const data = await this.usersRepo.updateUserProfile(userId, dto);
 
       if (!data) {
         this.logger.error(
@@ -116,7 +120,7 @@ export class UsersService {
     );
 
     try {
-      const data = await this.dbRepo.addUserSkillCompat(
+      const data = await this.skillsRepo.addUserSkillCompat(
         id,
         dto.skill_name,
         dto.proficiency_level,
@@ -146,7 +150,7 @@ export class UsersService {
    * Find user by ID
    */
   async findById(id: string) {
-    const user = await this.dbRepo.findUserById(id);
+    const user = await this.usersRepo.findUserById(id);
 
     if (!user) {
       throw new NotFoundException(MESSAGES.NOT_FOUND);
@@ -176,7 +180,7 @@ export class UsersService {
     );
 
     try {
-      const data = await this.dbRepo.updateUserActiveStatus(id, isActive);
+      const data = await this.usersRepo.updateUserActiveStatus(id, isActive);
       if (!data) {
         this.logger.error(`Failed to toggle active status for user: ${id}`);
         throw new BadRequestException('Failed to update user');
@@ -213,7 +217,7 @@ export class UsersService {
     );
 
     try {
-      const data = await this.dbRepo.updateUserRoleCompat(id, role as string);
+      const data = await this.usersRepo.updateUserRoleCompat(id, role as string);
       if (!data) {
         this.logger.error(`Failed to update role for user: ${id} to ${role}`);
         throw new BadRequestException('Failed to update user');
@@ -238,7 +242,7 @@ export class UsersService {
    * Update user's last login timestamp
    */
   async updateLastLogin(id: string) {
-    const data = await this.dbRepo.updateLastLogin(id);
+    const data = await this.usersRepo.updateLastLogin(id);
 
     if (!data) {
       throw new BadRequestException('Failed to update last login');
@@ -256,7 +260,7 @@ export class UsersService {
     }
 
     try {
-      return await this.dbRepo.addUserSkillsBatch(userId, skills);
+      return await this.skillsRepo.addUserSkillsBatch(userId, skills);
     } catch (error) {
       throw new BadRequestException(error.message || 'Failed to add skills');
     }
@@ -266,7 +270,7 @@ export class UsersService {
    * Find user by email
    */
   async findByEmail(email: string) {
-    const user = await this.dbRepo.findUserByEmail(email);
+    const user = await this.usersRepo.findUserByEmail(email);
 
     if (!user) {
       throw new NotFoundException(
@@ -352,7 +356,7 @@ export class UsersService {
     this.logger.log('Fetching all moderators with skills');
 
     try {
-      const data = await this.dbRepo.findModeratorsWithSkillsCompat();
+      const data = await this.usersRepo.findModeratorsWithSkillsCompat();
       const result = (data || []).map((u: any) => ({
         ...u,
         skills: u.user_skills || [],
@@ -369,7 +373,7 @@ export class UsersService {
    * Get a single moderator with skills
    */
   async getModeratorById(id: string) {
-    const data = await this.dbRepo.findModeratorWithSkillsByIdCompat(id);
+    const data = await this.usersRepo.findModeratorWithSkillsByIdCompat(id);
     if (!data) {
       throw new NotFoundException(MESSAGES.NOT_FOUND);
     }

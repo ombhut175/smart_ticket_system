@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InngestService } from './inngest.service';
-import { DatabaseRepository } from '../core/database/database.repository';
+import { TicketsRepository } from '../core/database/repositories/tickets.repository';
 import { AiService } from '../modules/ai/ai.service';
 import { AssignmentService } from '../modules/assignment/assignment.service';
 import { EmailService } from '../modules/email/email.service';
@@ -12,7 +12,7 @@ export class BackgroundService implements OnModuleInit {
 
   constructor(
     private readonly inngestService: InngestService,
-    private readonly dbRepo: DatabaseRepository,
+    private readonly ticketsRepo: TicketsRepository,
     private readonly aiService: AiService,
     private readonly assignmentService: AssignmentService,
     private readonly emailService: EmailService,
@@ -22,7 +22,7 @@ export class BackgroundService implements OnModuleInit {
     // Register workflows
     const ticketWorkflow = createTicketCreatedWorkflow(
       this.inngestService,
-      this.dbRepo,
+      this.ticketsRepo,
       this.aiService,
       this.assignmentService,
       this.emailService,

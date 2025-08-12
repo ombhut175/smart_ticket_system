@@ -9,14 +9,14 @@ import {
   MESSAGES,
 } from '../../common/helpers/string-const';
 import { InngestService } from '../inngest.service';
-import { DatabaseRepository } from '../../core/database/database.repository';
+import { TicketsRepository } from '../../core/database/repositories/tickets.repository';
 import { AiService } from '../../modules/ai/ai.service';
 import { AssignmentService } from '../../modules/assignment/assignment.service';
 import { EmailService } from '../../modules/email/email.service';
 
 export const createTicketCreatedWorkflow = (
   inngestService: InngestService,
-  dbRepo: DatabaseRepository,
+  ticketsRepo: TicketsRepository,
   aiService: AiService,
   assignmentService: AssignmentService,
   emailService: EmailService,
@@ -39,7 +39,7 @@ export const createTicketCreatedWorkflow = (
             INNGEST_STEPS.FETCH_TICKET as string,
             async () => {
               console.log(`📋 Fetching ticket with ID: ${ticketId}`);
-              const data = await dbRepo.findTicketById(ticketId);
+              const data = await ticketsRepo.findTicketById(ticketId);
               if (!data) {
                 console.error(`❌ Ticket not found: ${ticketId}`);
                 throw new NonRetriableError(MESSAGES.TICKET_NOT_FOUND);
@@ -56,7 +56,7 @@ export const createTicketCreatedWorkflow = (
               console.log(
                 `🔄 Updating ticket status to TODO for: ${ticket.id}`,
               );
-              await dbRepo.updateTicket(ticket.id, {
+              await ticketsRepo.updateTicket(ticket.id, {
                 status: TICKET_STATUS.TODO,
               } as any);
               console.log(`✅ Ticket status updated to TODO`);
@@ -84,7 +84,7 @@ export const createTicketCreatedWorkflow = (
                   ? aiResponse.priority
                   : 'medium';
 
-                await dbRepo.updateTicket(ticket.id, {
+                await ticketsRepo.updateTicket(ticket.id, {
                   priority: validPriority,
                   helpfulNotes: aiResponse.helpfulNotes,
                   summary: aiResponse.summary,
