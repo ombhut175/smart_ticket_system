@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Ticket, Send, Loader2, CheckCircle } from "lucide-react"
-import { ticketService } from "@/services/ticket.service"
 import { toast } from "sonner"
-import { useAuth } from "@/contexts/AuthContext"
+import { useAuth } from "@/stores/auth-store"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
+import useSWRMutation from 'swr/mutation'
+import { postFetcher } from '@/lib/swr/fetchers'
 
 export default function NewTicketPage() {
   const { user } = useAuth()
@@ -57,6 +58,8 @@ export default function NewTicketPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const { trigger: createTicket, isMutating } = useSWRMutation('/tickets', postFetcher)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -67,7 +70,7 @@ export default function NewTicketPage() {
     setIsSubmitting(true)
 
     try {
-      await ticketService.createTicket({
+      await createTicket({
         title: formData.title.trim(),
         description: formData.description.trim(),
       })

@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/input"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { useAuth } from "@/contexts/AuthContext"
-import { ticketService } from "@/services/ticket.service"
+import { useAuth } from "@/stores/auth-store"
 import { toast } from "sonner"
 import { Ticket, TicketQueryParams } from "@/types"
 import { DashboardSkeleton } from "@/components/loading-skeleton"
+import useSWR from 'swr'
+import { handleError } from '@/helpers/helpers'
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
@@ -86,45 +87,43 @@ function formatDate(dateString: string) {
 export default function TicketsPage() {
   const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
-  const [tickets, setTickets] = useState<Ticket[]>([])
-  const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Load tickets from API
-  useEffect(() => {
-    const loadTickets = async () => {
-      if (!user) return
-      
-      try {
-        setLoading(true)
-        const params: TicketQueryParams = {
-          page: currentPage,
-          limit: 20,
-          ...(statusFilter !== "all" && { status: statusFilter as any }),
-          ...(priorityFilter !== "all" && { priority: priorityFilter as any })
-        }
-        
-        const response = await ticketService.getUserTickets(params)
-        setTickets(response.data)
-        setTotalPages(Math.ceil(response.meta.total / response.meta.limit))
-      } catch (error) {
-        console.error('Error loading tickets:', error)
-        toast.error('Failed to load tickets')
-      } finally {
-        setLoading(false)
-      }
+  const query = useMemo(() => {
+    const params: Record<string, any> = {
+      page: currentPage,
+      limit: 20,
     }
+    if (statusFilter !== 'all') params.status = statusFilter
+    if (priorityFilter !== 'all') params.priority = priorityFilter
+    const qs = new URLSearchParams(params).toString()
+    return `/tickets?${qs}`
+  }, [currentPage, statusFilter, priorityFilter])
 
-    loadTickets()
-  }, [user, currentPage, statusFilter, priorityFilter])
+  const { data: ticketsResp, isLoading: loading } = useSWR<{
+    success: boolean;
+    statusCode: number;
+    message: string;
+    data: Ticket[];
+    meta: { total: number; page: number; limit: number };
+    timestamp: string;
+  }>(user ? query : null, {
+    onError: (err) => {
+      console.error('Error loading tickets:', err)
+      toast.error('Failed to load tickets')
+    },
+    revalidateOnFocus: true,
+  })
+
+  const tickets = ticketsResp?.data ?? []
+  const totalPages = ticketsResp ? Math.ceil(ticketsResp.meta.total / ticketsResp.meta.limit) : 1
 
   if (!mounted || !user) return <DashboardSkeleton />
 

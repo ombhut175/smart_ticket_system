@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { FooterNav } from "@/components/navigation/footer-nav"
@@ -13,27 +13,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { motion } from "framer-motion"
-import { userService } from "@/services/user.service"
-import { useAuth } from "@/contexts/AuthContext"
+import { useAuth } from "@/stores/auth-store"
 import { toast } from "sonner"
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Edit3,
-  Save,
-  X,
-  Camera,
-  Shield,
-  Award,
-  Activity,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  XCircle,
-} from "lucide-react"
+import useSWR from 'swr'
+import useSWRMutation from 'swr/mutation'
+import { putFetcher } from '@/lib/swr/fetchers'
+import type { User } from '@/types'
+import { handleError } from '@/helpers/helpers'
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Ticket, Send, Loader2, CheckCircle, Mail, Phone, MapPin, Calendar, Edit3, Save, X, Camera, Shield, Award, Activity, Clock, AlertCircle, XCircle, User } from "lucide-react"
 
 // Mock user data (fallback until real profile loads)
 const mockUser = {
@@ -81,47 +70,39 @@ export default function ProfilePage() {
   const { refreshUser } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-  })
+  const [formData, setFormData] = useState({ first_name: "", last_name: "" })
   const [profile, setProfile] = useState({ ...mockUser })
 
+  const { data: meResp, isLoading: meLoading } = useSWR<{
+    success: boolean; statusCode: number; message: string; data: User
+  }>(`/users/me`, { onError: (e) => toast.error(e?.message || 'Failed to load profile') })
+
   useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      try {
-        const me = await userService.getProfile()
-        if (!mounted) return
-        setProfile((p) => ({
-          ...p,
-          id: me.id,
-          name: `${me.first_name ?? ""} ${me.last_name ?? ""}`.trim() || me.email.split("@")[0],
-          email: me.email,
-          role: me.role,
-          joinDate: me.created_at,
-        }))
-        setFormData({ first_name: me.first_name ?? "", last_name: me.last_name ?? "" })
-      } catch (e: any) {
-        toast.error(e?.message || "Failed to load profile")
-      } finally {
-        setIsLoading(false)
-      }
+    setIsLoading(meLoading)
+    if (meResp?.data) {
+      const me = meResp.data
+      setProfile((p) => ({
+        ...p,
+        id: me.id,
+        name: `${me.first_name ?? ''} ${me.last_name ?? ''}`.trim() || me.email.split("@")[0],
+        email: me.email,
+        role: me.role,
+        joinDate: me.created_at,
+      }))
+      setFormData({ first_name: me.first_name ?? '', last_name: me.last_name ?? '' })
     }
-    load()
-    return () => {
-      mounted = false
-    }
-  }, [])
+  }, [meLoading, meResp])
+
+  const { trigger: updateProfile } = useSWRMutation('/users/me', putFetcher)
 
   const handleSave = async () => {
     try {
       setIsLoading(true)
-      const updated = await userService.updateProfile({ ...formData })
+      const updated = await updateProfile({ ...formData })
       toast.success("Profile updated")
       setProfile((p) => ({
         ...p,
-        name: `${updated.first_name ?? ""} ${updated.last_name ?? ""}`.trim() || updated.email.split("@")[0],
+        name: `${updated.first_name ?? ''} ${updated.last_name ?? ''}`.trim() || updated.email.split("@")[0],
         email: updated.email,
         role: updated.role,
       }))

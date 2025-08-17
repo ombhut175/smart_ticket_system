@@ -29,7 +29,7 @@ import {
   Home,
 } from "lucide-react"
 import { User } from "@/types"
-import { useAuth } from "@/contexts/AuthContext"
+import { useAuth } from "@/stores/auth-store"
 import { toast } from "sonner"
 
 interface HeaderProps {

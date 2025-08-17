@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -44,14 +44,15 @@ import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { SidebarNav } from "@/components/navigation/sidebar-nav"
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/contexts/AuthContext"
-import { Ticket, TicketQueryParams, PaginatedResponse } from "@/types"
-import { ticketService } from "@/services/ticket.service"
+import { useAuth } from "@/stores/auth-store"
+import { Ticket } from "@/types"
+import useSWR from 'swr'
+import useSWRMutation from 'swr/mutation'
+import { deleteFetcher } from '@/lib/swr/fetchers'
 
 export default function AdminTicketsPage() {
   const { user, isLoading: authLoading } = useAuth()
   const [tickets, setTickets] = useState<Ticket[]>([])
-  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [priorityFilter, setPriorityFilter] = useState<string>("all")
@@ -66,48 +67,34 @@ export default function AdminTicketsPage() {
 
   const itemsPerPage = 20
 
-  // Load tickets
-  const loadTickets = async () => {
-    try {
-      setLoading(true)
-      const params: TicketQueryParams = {
-        page: currentPage,
-        limit: itemsPerPage,
-      }
+  const listQuery = useMemo(() => {
+    const params: Record<string, any> = { page: currentPage, limit: itemsPerPage }
+    if (statusFilter !== 'all') params.status = statusFilter
+    if (priorityFilter !== 'all') params.priority = priorityFilter
+    if (assigneeFilter !== 'all') params.assigned_to = assigneeFilter === 'unassigned' ? '' : assigneeFilter
+    const qs = new URLSearchParams(params).toString()
+    return `/tickets/all?${qs}`
+  }, [currentPage, statusFilter, priorityFilter, assigneeFilter])
 
-      if (statusFilter !== "all") {
-        params.status = statusFilter as any
-      }
-      if (priorityFilter !== "all") {
-        params.priority = priorityFilter as any
-      }
-      if (assigneeFilter !== "all") {
-        if (assigneeFilter === "unassigned") {
-          params.assigned_to = ""
-        } else {
-          params.assigned_to = assigneeFilter
-        }
-      }
-
-      const response: PaginatedResponse<Ticket> = await ticketService.getAllTickets(params)
-      setTickets(response.data)
-      setTotalTickets(response.meta.total)
-      setTotalPages(Math.ceil(response.meta.total / itemsPerPage))
-    } catch (error) {
-      console.error('Error loading tickets:', error)
-      toast({
-        title: "Error",
-        description: "Failed to load tickets. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: ticketsResp, isLoading: loading, mutate } = useSWR<{
+    success: boolean;
+    statusCode: number;
+    message: string;
+    data: Ticket[];
+    meta: { total: number; page: number; limit: number };
+    timestamp: string;
+  }>(listQuery, {
+    onError: () => toast({ title: 'Error', description: 'Failed to load tickets. Please try again.', variant: 'destructive' }),
+    revalidateOnFocus: true,
+  })
 
   useEffect(() => {
-    loadTickets()
-  }, [currentPage, statusFilter, priorityFilter, assigneeFilter])
+    if (ticketsResp) {
+      setTickets(ticketsResp.data)
+      setTotalTickets(ticketsResp.meta.total)
+      setTotalPages(Math.ceil(ticketsResp.meta.total / itemsPerPage))
+    }
+  }, [ticketsResp])
 
   // Filter tickets by search term (client-side)
   const filteredTickets = tickets.filter(ticket =>
@@ -117,27 +104,24 @@ export default function AdminTicketsPage() {
     ticket.assignee?.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const { trigger: deleteTicket } = useSWRMutation<string, any, string, void>(
+    selectedTicket ? `/tickets/${selectedTicket.id}` : null,
+    async (url: string) => deleteFetcher(url)
+  )
+
   // Delete ticket
   const handleDeleteTicket = async () => {
     if (!selectedTicket) return
 
     try {
       setDeleteLoading(true)
-      await ticketService.deleteTicket(selectedTicket.id)
-      toast({
-        title: "Success",
-        description: "Ticket deleted successfully.",
-      })
+      await deleteTicket()
+      toast({ title: 'Success', description: 'Ticket deleted successfully.' })
       setShowDeleteDialog(false)
       setSelectedTicket(null)
-      loadTickets() // Refresh the list
+      await mutate() // Refresh the list
     } catch (error) {
-      console.error('Error deleting ticket:', error)
-      toast({
-        title: "Error",
-        description: "Failed to delete ticket. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: 'Error', description: 'Failed to delete ticket. Please try again.', variant: 'destructive' })
     } finally {
       setDeleteLoading(false)
     }
@@ -247,12 +231,12 @@ export default function AdminTicketsPage() {
                 </p>
               </div>
               
-              <Button 
-                onClick={loadTickets} 
-                disabled={loading}
+              {/* Refresh now revalidates SWR cache */}
+              <Button
+                onClick={() => mutate()}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
             </div>

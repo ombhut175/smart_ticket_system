@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -37,11 +37,15 @@ import {
   XCircle,
 } from "lucide-react"
 
-// Add these imports at the top
 import { User, UserRole } from "@/types";
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { SidebarNav } from "@/components/navigation/sidebar-nav"
+import { useAuth } from '@/stores/auth-store'
+import useSWR from 'swr'
+import useSWRMutation from 'swr/mutation'
+import { patchFetcher } from '@/lib/swr/fetchers'
+import { handleError } from '@/helpers/helpers'
 
 interface ExtendedUser extends User {
   id: string;
@@ -50,10 +54,6 @@ interface ExtendedUser extends User {
   lastLogin: string;
   ticketCount: number;
 }
-
-// Add api-client import
-import { apiClient } from '@/lib/api-client';
-import { useAuth } from '@/hooks/useAuth';
 
 // Remove mock data
 //]
@@ -114,32 +114,26 @@ export default function AdminUsersPage() {
   const [dialogType, setDialogType] = useState<"role" | "status">("role")
   const [newRole, setNewRole] = useState<UserRole>("User")
 
-  // State for users and loading
-  const [users, setUsers] = useState<ExtendedUser[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch users from backend
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        setLoading(true);
-        const userData = await apiClient.getAllUsers();
-        setUsers(userData.map((user: any) => ({
-          ...user,
-          name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email,
-          isActive: user.is_active,
-          createdAt: user.created_at,
-          lastLogin: user.last_login_at,
-          ticketCount: 0 // Assuming you want to display ticket count, revise if you fetch this too
-        })));
-      } catch (err) {
-        console.error("Failed to fetch users:", err);
-      } finally {
-        setLoading(false);
-      }
+  // SWR: fetch users list
+  const { data: usersData, isLoading: loading, mutate } = useSWR<ExtendedUser[]>(
+    '/users/all',
+    {
+      onError: (err) => handleError(err as any, 'Failed to fetch users'),
+      revalidateOnFocus: true,
     }
-    fetchUsers();
-  }, []);
+  )
+
+  const users: ExtendedUser[] = useMemo(() => {
+    const raw: any[] = Array.isArray(usersData) ? usersData : (usersData as any)?.data ?? []
+    return raw.map((user: any) => ({
+      ...user,
+      name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email,
+      isActive: user.is_active,
+      createdAt: user.created_at,
+      lastLogin: user.last_login_at,
+      ticketCount: 0
+    }))
+  }, [usersData])
 
   useEffect(() => {
     setMounted(true)
@@ -203,36 +197,29 @@ export default function AdminUsersPage() {
     setDialogOpen(true)
   }
 
+  const { trigger: updateRole, isMutating: updatingRole } = useSWRMutation(
+    selectedUser ? `/users/${selectedUser.id}/role` : null,
+    patchFetcher
+  )
+  const { trigger: toggleActive, isMutating: toggling } = useSWRMutation(
+    selectedUser ? `/users/${selectedUser.id}/active` : null,
+    patchFetcher
+  )
+
   const handleConfirmAction = async () => {
     if (!selectedUser) return
 
     try {
-      setLoading(true)
-      
       if (dialogType === "role") {
-        await apiClient.updateUserRole(selectedUser.id, newRole.toLowerCase())
+        await updateRole({ role: newRole.toLowerCase() })
       } else {
-        await apiClient.toggleUserActive(selectedUser.id, !selectedUser.isActive)
+        await toggleActive({ is_active: !selectedUser.isActive })
       }
-      
-      // Refresh the users list
-      const userData = await apiClient.getAllUsers()
-      setUsers(userData.map((user: any) => ({
-        ...user,
-        name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email,
-        isActive: user.is_active,
-        createdAt: user.created_at,
-        lastLogin: user.last_login_at,
-        ticketCount: 0
-      })))
-      
+      await mutate() // refetch users list
       setDialogOpen(false)
       setSelectedUser(null)
     } catch (err) {
-      console.error("Failed to update user:", err)
-      alert("Failed to update user. Please try again.")
-    } finally {
-      setLoading(false)
+      handleError(err as any, 'Failed to update user')
     }
   }
 
