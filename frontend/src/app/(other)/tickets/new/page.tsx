@@ -11,27 +11,21 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Ticket, Send, Loader2, CheckCircle } from "lucide-react"
-
-// Add these imports at the top
-import { User } from "@/types";
+import { ticketService } from "@/services/ticket.service"
+import { toast } from "sonner"
+import { useAuth } from "@/contexts/AuthContext"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
-
-const mockUser: User = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  role: "User",
-  avatar: "",
-}
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 
 export default function NewTicketPage() {
+  const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    priority: "",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const router = useRouter()
@@ -47,16 +41,16 @@ export default function NewTicketPage() {
       newErrors.title = "Title is required"
     } else if (formData.title.length < 5) {
       newErrors.title = "Title must be at least 5 characters long"
+    } else if (formData.title.length > 200) {
+      newErrors.title = "Title must be less than 200 characters long"
     }
 
     if (!formData.description.trim()) {
       newErrors.description = "Description is required"
-    } else if (formData.description.length < 20) {
-      newErrors.description = "Description must be at least 20 characters long"
-    }
-
-    if (!formData.priority) {
-      newErrors.priority = "Priority is required"
+    } else if (formData.description.length < 10) {
+      newErrors.description = "Description must be at least 10 characters long"
+    } else if (formData.description.length > 5000) {
+      newErrors.description = "Description must be less than 5000 characters long"
     }
 
     setErrors(newErrors)
@@ -72,16 +66,19 @@ export default function NewTicketPage() {
 
     setIsSubmitting(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    setIsSubmitting(false)
-    setIsSuccess(true)
-
-    // Redirect to tickets page after 2 seconds
-    setTimeout(() => {
-      router.push("/tickets")
-    }, 2000)
+    try {
+      await ticketService.createTicket({
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+      })
+      setIsSuccess(true)
+      toast.success("Ticket created successfully!")
+      setTimeout(() => router.push("/tickets"), 1000)
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to create ticket")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -92,37 +89,40 @@ export default function NewTicketPage() {
     }
   }
 
-  if (!mounted) return null
+  if (!mounted || !user) return null
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-8 pb-8">
-            <div className="text-center space-y-6">
-              <div className="flex justify-center">
-                <div className="rounded-full bg-green-100 dark:bg-green-900/20 p-4">
-                  <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardContent className="pt-8 pb-8">
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="rounded-full bg-green-100 dark:bg-green-900/20 p-4">
+                    <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
+                  </div>
                 </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Ticket Created Successfully!</h2>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Your support ticket has been submitted. We'll get back to you soon.
+                  </p>
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Redirecting to your tickets...</div>
               </div>
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Ticket Created Successfully!</h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Your support ticket has been submitted. We'll get back to you soon.
-                </p>
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">Redirecting to your tickets...</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedRoute>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-indigo-900/20">
-      {/* Header */}
-      <Header user={mockUser} variant="user" />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-indigo-900/20">
+        {/* Header */}
+        <Header user={user} variant="user" />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -173,27 +173,6 @@ export default function NewTicketPage() {
                   {errors.title && <p className="text-sm text-red-600 dark:text-red-400">{errors.title}</p>}
                 </div>
 
-                {/* Priority Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="priority" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Priority *
-                  </Label>
-                  <Select
-                    value={formData.priority}
-                    onValueChange={(value) => handleInputChange("priority", value)}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger className={`h-12 ${errors.priority ? "border-red-500" : ""}`}>
-                      <SelectValue placeholder="Select priority level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Low">Low - General questions or minor issues</SelectItem>
-                      <SelectItem value="Medium">Medium - Issues affecting functionality</SelectItem>
-                      <SelectItem value="High">High - Critical issues or urgent requests</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.priority && <p className="text-sm text-red-600 dark:text-red-400">{errors.priority}</p>}
-                </div>
 
                 {/* Description Field */}
                 <div className="space-y-2">
@@ -210,7 +189,7 @@ export default function NewTicketPage() {
                   />
                   {errors.description && <p className="text-sm text-red-600 dark:text-red-400">{errors.description}</p>}
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formData.description.length}/500 characters
+                    {formData.description.length}/5000 characters
                   </p>
                 </div>
 
@@ -242,5 +221,6 @@ export default function NewTicketPage() {
         </div>
       </main>
     </div>
+    </ProtectedRoute>
   )
 }

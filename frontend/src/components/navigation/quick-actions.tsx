@@ -3,15 +3,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { Plus, Search, Users, Settings, TrendingUp, Shield } from "lucide-react"
+import { UserRole } from "@/types"
 
 interface QuickActionsProps {
-  userRole: "User" | "Moderator" | "Admin"
+  userRole: UserRole
 }
 
 export function QuickActions({ userRole }: QuickActionsProps) {
   const getUserActions = () => {
     switch (userRole) {
-      case "Admin":
+      case "admin":
         return [
           {
             title: "Manage Users",
@@ -35,7 +36,7 @@ export function QuickActions({ userRole }: QuickActionsProps) {
             color: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
           },
         ]
-      case "Moderator":
+      case "moderator":
         return [
           {
             title: "View All Tickets",
@@ -47,7 +48,7 @@ export function QuickActions({ userRole }: QuickActionsProps) {
           {
             title: "Analytics",
             description: "View ticket statistics and trends",
-            href: "/moderator/analytics",
+            href: "/moderator/dashboard",
             icon: TrendingUp,
             color: "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400",
           },
@@ -89,10 +90,10 @@ export function QuickActions({ userRole }: QuickActionsProps) {
                 key={action.href}
                 asChild
                 variant="outline"
-                className="h-auto p-4 justify-start bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="h-auto p-4 justify-start bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 whitespace-normal"
               >
                 <Link href={action.href}>
-                  <div className="flex items-start gap-3 w-full">
+                  <div className="flex items-center gap-3 w-full">
                     <div className={`rounded-lg p-2 ${action.color}`}>
                       <IconComponent className="h-5 w-5" />
                     </div>

@@ -6,110 +6,69 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Filter, Search, Clock, CheckCircle, Circle } from "lucide-react"
+import { Plus, Filter, Search, Clock, CheckCircle, Circle, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
-import { User } from "@/types";
-
-// Mock data for demonstration
-const mockTickets = [
-  {
-    id: "TK-001",
-    title: "Login issues with mobile app",
-    status: "Open",
-    priority: "High",
-    lastUpdated: "2024-01-15T10:30:00Z",
-    createdAt: "2024-01-14T09:15:00Z",
-  },
-  {
-    id: "TK-002",
-    title: "Feature request: Dark mode support",
-    status: "In Progress",
-    priority: "Medium",
-    lastUpdated: "2024-01-14T16:45:00Z",
-    createdAt: "2024-01-13T11:20:00Z",
-  },
-  {
-    id: "TK-003",
-    title: "Payment processing error on checkout",
-    status: "Resolved",
-    priority: "High",
-    lastUpdated: "2024-01-12T14:20:00Z",
-    createdAt: "2024-01-10T08:30:00Z",
-  },
-  {
-    id: "TK-004",
-    title: "Account verification help needed",
-    status: "Open",
-    priority: "Low",
-    lastUpdated: "2024-01-10T09:15:00Z",
-    createdAt: "2024-01-09T15:45:00Z",
-  },
-  {
-    id: "TK-005",
-    title: "Data export functionality request",
-    status: "In Progress",
-    priority: "Medium",
-    lastUpdated: "2024-01-08T11:30:00Z",
-    createdAt: "2024-01-07T13:20:00Z",
-  },
-  {
-    id: "TK-006",
-    title: "Bug report: Dashboard not loading",
-    status: "Resolved",
-    priority: "High",
-    lastUpdated: "2024-01-05T16:00:00Z",
-    createdAt: "2024-01-04T10:15:00Z",
-  },
-]
-
-const mockUser: User = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  role: "User",
-  avatar: "",
-}
+import { ProtectedRoute } from "@/components/ProtectedRoute"
+import { useAuth } from "@/contexts/AuthContext"
+import { ticketService } from "@/services/ticket.service"
+import { toast } from "sonner"
+import { Ticket, TicketQueryParams } from "@/types"
+import { DashboardSkeleton } from "@/components/loading-skeleton"
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case "Open":
-        return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: Circle }
-      case "In Progress":
-        return { color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400", icon: Clock }
-      case "Resolved":
-        return { color: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400", icon: CheckCircle }
+      case "todo":
+        return { color: "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800", icon: Circle, label: "Open" }
+      case "in_progress":
+        return { color: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800", icon: Clock, label: "In Progress" }
+      case "waiting_for_customer":
+        return { color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800", icon: Circle, label: "Waiting for Customer" }
+      case "resolved":
+        return { color: "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800", icon: CheckCircle, label: "Resolved" }
+      case "closed":
+        return { color: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800", icon: CheckCircle, label: "Closed" }
+      case "cancelled":
+        return { color: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800", icon: Circle, label: "Cancelled" }
       default:
-        return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: Circle }
+        return { color: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700", icon: Circle, label: "Unknown" }
     }
   }
 
-  const { color, icon: Icon } = getStatusConfig(status)
+  const { color, icon: Icon, label } = getStatusConfig(status)
 
   return (
-    <Badge className={`${color} flex items-center gap-1 font-medium`}>
+    <Badge className={`${color} border flex items-center gap-1 font-medium`}>
       <Icon className="h-3 w-3" />
-      {status}
+      {label}
     </Badge>
   )
 }
 
 function PriorityBadge({ priority }: { priority: string }) {
-  const getPriorityColor = (priority: string) => {
+  const getPriorityConfig = (priority: string) => {
     switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
-      case "Medium":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
-      case "Low":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+      case "high":
+        return { color: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400", icon: AlertCircle, label: "High" }
+      case "medium":
+        return { color: "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400", icon: Clock, label: "Medium" }
+      case "low":
+        return { color: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400", icon: Circle, label: "Low" }
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+        return { color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300", icon: Circle, label: "Unknown" }
     }
   }
 
-  return <Badge className={`${getPriorityColor(priority)} text-xs`}>{priority}</Badge>
+  const { color, icon: Icon, label } = getPriorityConfig(priority)
+
+  return (
+    <Badge className={`${color} text-xs flex items-center gap-1`}>
+      <Icon className="h-3 w-3" />
+      {label}
+    </Badge>
+  )
 }
 
 function formatDate(dateString: string) {
@@ -125,21 +84,55 @@ function formatDate(dateString: string) {
 }
 
 export default function TicketsPage() {
+  const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  if (!mounted) return null
+  // Load tickets from API
+  useEffect(() => {
+    const loadTickets = async () => {
+      if (!user) return
+      
+      try {
+        setLoading(true)
+        const params: TicketQueryParams = {
+          page: currentPage,
+          limit: 20,
+          ...(statusFilter !== "all" && { status: statusFilter as any }),
+          ...(priorityFilter !== "all" && { priority: priorityFilter as any })
+        }
+        
+        const response = await ticketService.getUserTickets(params)
+        setTickets(response.data)
+        setTotalPages(Math.ceil(response.meta.total / response.meta.limit))
+      } catch (error) {
+        console.error('Error loading tickets:', error)
+        toast.error('Failed to load tickets')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadTickets()
+  }, [user, currentPage, statusFilter, priorityFilter])
+
+  if (!mounted || !user) return <DashboardSkeleton />
 
   // Filter tickets based on current filters
-  const filteredTickets = mockTickets.filter((ticket) => {
+  const filteredTickets = tickets.filter((ticket) => {
     const matchesStatus = statusFilter === "all" || ticket.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter
+    const matchesPriority =
+      priorityFilter === "all" || ticket.priority.toLowerCase() === priorityFilter.toLowerCase()
     const matchesSearch =
       searchQuery === "" ||
       ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -149,13 +142,14 @@ export default function TicketsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-indigo-900/20">
-      {/* Header */}
-      <Header user={mockUser} variant="user" />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-indigo-900/20">
+        {/* Header */}
+        <Header user={user} variant="user" />
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BreadcrumbNav />
+        {/* Main Content */}
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <BreadcrumbNav />
         <div className="space-y-8">
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -199,9 +193,12 @@ export default function TicketsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="Open">Open</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Resolved">Resolved</SelectItem>
+                    <SelectItem value="todo">Open</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="waiting_for_customer">Waiting for Customer</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
@@ -210,9 +207,9 @@ export default function TicketsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Priorities</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -222,7 +219,7 @@ export default function TicketsPage() {
           {/* Tickets Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Tickets ({filteredTickets.length})</CardTitle>
+              <CardTitle>Tickets {loading ? "(Loading...)" : `(${filteredTickets.length})`}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -237,10 +234,21 @@ export default function TicketsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTickets.length === 0 ? (
+                    {loading ? (
+                      // Loading skeleton
+                      Array.from({ length: 5 }).map((_, index) => (
+                        <TableRow key={index}>
+                          <TableCell><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div></TableCell>
+                        </TableRow>
+                      ))
+                    ) : filteredTickets.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                          No tickets found matching your filters
+                          {tickets.length === 0 ? "No tickets found. Create your first ticket!" : "No tickets found matching your filters"}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -253,7 +261,7 @@ export default function TicketsPage() {
                             console.log(`Navigate to ticket ${ticket.id}`)
                           }}
                         >
-                          <TableCell className="font-mono text-sm">{ticket.id}</TableCell>
+                          <TableCell className="font-mono text-sm">{ticket.id.slice(0, 8)}...</TableCell>
                           <TableCell className="font-medium">{ticket.title}</TableCell>
                           <TableCell>
                             <StatusBadge status={ticket.status} />
@@ -262,7 +270,7 @@ export default function TicketsPage() {
                             <PriorityBadge priority={ticket.priority} />
                           </TableCell>
                           <TableCell className="text-gray-500 dark:text-gray-400">
-                            {formatDate(ticket.lastUpdated)}
+                            {formatDate(ticket.updated_at)}
                           </TableCell>
                         </TableRow>
                       ))
@@ -275,5 +283,6 @@ export default function TicketsPage() {
         </div>
       </main>
     </div>
+    </ProtectedRoute>
   )
 }

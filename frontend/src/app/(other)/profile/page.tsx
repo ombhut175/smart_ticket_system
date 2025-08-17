@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { FooterNav } from "@/components/navigation/footer-nav"
@@ -13,6 +13,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { motion } from "framer-motion"
+import { userService } from "@/services/user.service"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
 import {
   User,
   Mail,
@@ -32,7 +35,7 @@ import {
   XCircle,
 } from "lucide-react"
 
-// Mock user data
+// Mock user data (fallback until real profile loads)
 const mockUser = {
   id: "1",
   name: "John Doe",
@@ -75,29 +78,63 @@ const mockUser = {
 }
 
 export default function ProfilePage() {
+  const { refreshUser } = useAuth()
+  const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
-    name: mockUser.name,
-    email: mockUser.email,
-    phone: mockUser.phone,
-    location: mockUser.location,
-    bio: mockUser.bio,
+    first_name: "",
+    last_name: "",
   })
+  const [profile, setProfile] = useState({ ...mockUser })
 
-  const handleSave = () => {
-    // Here you would typically save to your backend
-    console.log("Saving profile data:", formData)
-    setIsEditing(false)
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const me = await userService.getProfile()
+        if (!mounted) return
+        setProfile((p) => ({
+          ...p,
+          id: me.id,
+          name: `${me.first_name ?? ""} ${me.last_name ?? ""}`.trim() || me.email.split("@")[0],
+          email: me.email,
+          role: me.role,
+          joinDate: me.created_at,
+        }))
+        setFormData({ first_name: me.first_name ?? "", last_name: me.last_name ?? "" })
+      } catch (e: any) {
+        toast.error(e?.message || "Failed to load profile")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true)
+      const updated = await userService.updateProfile({ ...formData })
+      toast.success("Profile updated")
+      setProfile((p) => ({
+        ...p,
+        name: `${updated.first_name ?? ""} ${updated.last_name ?? ""}`.trim() || updated.email.split("@")[0],
+        email: updated.email,
+        role: updated.role,
+      }))
+      await refreshUser()
+      setIsEditing(false)
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to update profile")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleCancel = () => {
-    setFormData({
-      name: mockUser.name,
-      email: mockUser.email,
-      phone: mockUser.phone,
-      location: mockUser.location,
-      bio: mockUser.bio,
-    })
     setIsEditing(false)
   }
 
@@ -129,7 +166,20 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-gray-950 dark:via-blue-950/10 dark:to-indigo-950/10">
-      <Header user={mockUser} />
+      <Header user={{
+        id: profile.id,
+        email: profile.email,
+        role: (profile.role?.toLowerCase?.() || "user") as any,
+        is_active: true,
+        is_email_verified: false,
+        is_profile_completed: !!formData.first_name && !!formData.last_name,
+        created_at: profile.joinDate,
+        updated_at: profile.joinDate,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        name: profile.name,
+        avatar: profile.avatar,
+      }} />
       <BreadcrumbNav />
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -164,16 +214,16 @@ export default function ProfilePage() {
                 <div className="flex-1 mt-4 sm:mt-0">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{mockUser.name}</h1>
-                      <p className="text-gray-600 dark:text-gray-400">{mockUser.email}</p>
+                       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{profile.name || "My Profile"}</h1>
+                       <p className="text-gray-600 dark:text-gray-400">{profile.email}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <EnhancedBadge variant="secondary">
                           <Shield className="h-3 w-3 mr-1" />
-                          {mockUser.role}
+                           {profile.role}
                         </EnhancedBadge>
                         <EnhancedBadge variant="outline">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Joined {new Date(mockUser.joinDate).toLocaleDateString()}
+                           {profile.joinDate ? `Joined ${new Date(profile.joinDate).toLocaleDateString()}` : ""}
                         </EnhancedBadge>
                       </div>
                     </div>

@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -28,7 +28,9 @@ import {
   TrendingUp,
   Home,
 } from "lucide-react"
-import { User } from "@/types";
+import { User } from "@/types"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
 
 interface HeaderProps {
   user: User;
@@ -38,11 +40,27 @@ interface HeaderProps {
 export function Header({ user, variant = "user" }: HeaderProps) {
   const [mounted, setMounted] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const { logout } = useAuth()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      await logout()
+      toast.success('Logged out successfully')
+      router.push('/login')
+    } catch (error) {
+      toast.error('Failed to logout. Please try again.')
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   if (!mounted) return null
 
@@ -199,19 +217,49 @@ export function Header({ user, variant = "user" }: HeaderProps) {
                   <div className="border-t pt-6">
                     <div className="flex items-center gap-3 px-4 py-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                        <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name || user.email} />
                         <AvatarFallback className={config.badgeColor}>
                           {user.name
-                            .split(" ")
-                            .map((n: string) => n[0])
-                            .join("")}
+                            ? user.name.split(" ").map((n: string) => n[0]).join("")
+                            : user.email.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{user.name || user.email}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                         <Badge className={`mt-1 ${config.badgeColor}`}>{user.role}</Badge>
                       </div>
+                    </div>
+                    
+                    {/* Mobile Quick Actions */}
+                    <div className="px-4 py-2 space-y-2">
+                      <Link 
+                        href="/profile" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                      >
+                        <UserIcon className="h-4 w-4" />
+                        Profile
+                      </Link>
+                      <Link 
+                        href="/settings" 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                      >
+                        <Settings className="h-4 w-4" />
+                        Settings
+                      </Link>
+                      <button 
+                        onClick={() => {
+                          setMobileMenuOpen(false)
+                          handleLogout()
+                        }}
+                        disabled={isLoggingOut}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 disabled:opacity-50"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        {isLoggingOut ? 'Logging out...' : 'Logout'}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -223,12 +271,11 @@ export function Header({ user, variant = "user" }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name || user.email} />
                     <AvatarFallback className={config.badgeColor}>
                       {user.name
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")}
+                        ? user.name.split(" ").map((n: string) => n[0]).join("")
+                        : user.email.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -236,7 +283,7 @@ export function Header({ user, variant = "user" }: HeaderProps) {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{user.name}</p>
+                    <p className="font-medium">{user.name || user.email}</p>
                     <p className="w-[200px] truncate text-sm text-muted-foreground">{user.email}</p>
                     <Badge className={`w-fit ${config.badgeColor}`}>{user.role}</Badge>
                   </div>
@@ -255,9 +302,13 @@ export function Header({ user, variant = "user" }: HeaderProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="cursor-pointer focus:bg-red-50 dark:focus:bg-red-900/20 focus:text-red-600 dark:focus:text-red-400"
+                >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Logout
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

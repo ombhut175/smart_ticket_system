@@ -3,12 +3,16 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, Ticket, Eye, EyeOff, CheckCircle, Mail, ArrowRight, Sparkles, Shield, Zap } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
+import { APIError } from "@/types"
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -22,9 +26,19 @@ export default function SignupPage() {
     confirmPassword: "",
   })
 
+  const { signup, isAuthenticated } = useAuth()
+  const router = useRouter()
+
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,16 +46,30 @@ export default function SignupPage() {
 
     // Basic validation
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match")
+      toast.error("Passwords do not match")
       setIsLoading(false)
       return
     }
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters long")
+      setIsLoading(false)
+      return
+    }
 
-    setIsLoading(false)
-    setIsSuccess(true)
+    try {
+      await signup({
+        email: formData.email,
+        password: formData.password,
+      })
+      setIsSuccess(true)
+      toast.success('Account created successfully!')
+    } catch (error) {
+      const apiError = error as APIError
+      toast.error(apiError.message || 'Signup failed')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -6,7 +6,7 @@ import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 
 export function ThemeToggle() {
-  const { setTheme, theme } = useTheme()
+  const { setTheme, theme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -16,25 +16,25 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <Button variant="ghost" size="icon" className="h-9 w-9">
-        <Sun className="h-4 w-4" />
+        <Sun className="h-4 w-4 text-gray-600 dark:text-gray-400" />
         <span className="sr-only">Toggle theme</span>
       </Button>
     )
   }
 
-  const isDark = theme === "dark"
+  const isDark = resolvedTheme === "dark"
 
   return (
     <Button
       variant="ghost"
       size="icon"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="h-9 w-9 hover:bg-accent/50 transition-colors duration-200"
+      className="h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
     >
       {isDark ? (
-        <Sun className="h-4 w-4 transition-all duration-300" />
+        <Sun className="h-4 w-4 text-yellow-500 transition-all duration-300" />
       ) : (
-        <Moon className="h-4 w-4 transition-all duration-300" />
+        <Moon className="h-4 w-4 text-gray-600 transition-all duration-300" />
       )}
       <span className="sr-only">Toggle theme</span>
     </Button>
