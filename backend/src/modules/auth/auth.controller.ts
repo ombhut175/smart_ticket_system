@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -311,6 +312,75 @@ export class AuthController {
         error,
       );
       throw error;
+    }
+  }
+
+  //#endregion
+
+  //#region ==================== SESSION STATUS ====================
+
+  /**
+   * Check if user session is active
+   * @returns Standardized response with boolean data
+   * @description Validates presence and validity of auth token from cookie/header without throwing
+   */
+  @Get('isLoggedIn')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Check if current user is logged in',
+    description:
+      'Returns a boolean indicating whether the current request has a valid authenticated session.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns login status',
+    example: {
+      success: true,
+      statusCode: 200,
+      message: 'Success',
+      data: true,
+      timestamp: '2023-01-01T00:00:00.000Z',
+    },
+  })
+  async isLoggedIn(@Res({ passthrough: true }) res: Response) {
+    // Log endpoint access
+    this.logger.log(
+      interpolateMessage(LOG_MESSAGES.ENDPOINT_ACCESSED, {
+        method: 'GET',
+        endpoint: '/auth/isLoggedIn',
+        userId: 'anonymous',
+      }),
+    );
+
+    try {
+      const token =
+        CookieHelper.getAuthToken(res.req.cookies) ||
+        res.req.headers['authorization']?.toString().replace('Bearer ', '');
+      const loggedIn = await this.authService.isLoggedIn(token);
+
+      this.logger.log(
+        interpolateMessage(LOG_MESSAGES.ENDPOINT_COMPLETED, {
+          method: 'GET',
+          endpoint: '/auth/isLoggedIn',
+          userId: loggedIn ? 'current_user' : 'anonymous',
+        }),
+      );
+
+      return ApiResponseHelper.success({
+        isLoggedIn: loggedIn,
+      });
+    } catch (error) {
+      // Log endpoint failure
+      this.logger.error(
+        interpolateMessage(LOG_MESSAGES.ENDPOINT_FAILED, {
+          method: 'GET',
+          endpoint: '/auth/isLoggedIn',
+          userId: 'anonymous',
+        }),
+        error,
+      );
+      // Do not throw; return false for stability
+      return ApiResponseHelper.success(false);
     }
   }
 

@@ -176,4 +176,29 @@ export class AuthService {
       throw error;
     }
   }
+
+  /**
+   * Check if the provided access token corresponds to a valid Supabase session
+   * @param accessToken - Supabase JWT access token (from cookie or Authorization header)
+   * @returns Promise<boolean> - True if token is valid and user exists; otherwise false
+   */
+  async isLoggedIn(accessToken?: string): Promise<boolean> {
+    if (!accessToken) {
+      return false;
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .getClient()
+        .auth.getUser(accessToken);
+
+      if (error || !data?.user) {
+        return false;
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
