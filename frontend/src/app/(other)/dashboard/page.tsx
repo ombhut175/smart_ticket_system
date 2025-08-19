@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence, Easing, Variants } from "framer-motion"
 import { Plus, Clock, User as UserIcon, CheckCircle, AlertCircle, Circle, TrendingUp, Zap, Star } from "lucide-react"
@@ -11,11 +11,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { User, Ticket } from "@/types"
-import { useAuth } from "@/contexts/AuthContext"
+import { useAuth } from "@/stores/auth-store"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { ticketService } from "@/services/ticket.service"
 import { toast } from "sonner"
 import { DashboardSkeleton } from "@/components/loading-skeleton"
+import useSWR from 'swr'
 
 interface ExtendedUser extends User {
   profileComplete: boolean;
@@ -190,24 +190,25 @@ export default function DashboardPage() {
     setMounted(true)
   }, [])
 
-  // Load user's tickets
-  useEffect(() => {
-    const loadTickets = async () => {
-      try {
-        setTicketsLoading(true)
-        const response = await ticketService.getUserTickets({ page: 1, limit: 5 })
-        setTickets(response.data)
-      } catch (error) {
-        toast.error('Failed to load tickets')
-      } finally {
-        setTicketsLoading(false)
-      }
-    }
+  // Load user's tickets via SWR
+  const { data: recentTicketsResp, isLoading: recentLoading } = useSWR<{
+    success: boolean;
+    statusCode: number;
+    message: string;
+    data: Ticket[];
+    meta: { total: number; page: number; limit: number };
+    timestamp: string;
+  }>(user ? '/tickets?page=1&limit=5' : null, {
+    revalidateOnFocus: true,
+    onError: () => toast.error('Failed to load tickets')
+  })
 
-    if (user) {
-      loadTickets()
+  useEffect(() => {
+    setTicketsLoading(recentLoading)
+    if (recentTicketsResp?.data) {
+      setTickets(recentTicketsResp.data)
     }
-  }, [user])
+  }, [recentLoading, recentTicketsResp])
 
   if (!mounted || !user) return <DashboardSkeleton />
 

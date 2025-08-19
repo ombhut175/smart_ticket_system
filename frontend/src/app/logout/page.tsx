@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LogOut, ArrowLeft } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from "@/stores/auth-store"
 import { toast } from 'sonner'
 
 export default function LogoutPage() {

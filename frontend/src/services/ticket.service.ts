@@ -1,33 +1,32 @@
-import { apiRequest } from '@/lib/api';
+import { apiRequest } from '@/helpers/request';
 import { Ticket, CreateTicketData, UpdateTicketData, TicketQueryParams, PaginatedResponse } from '@/types';
 
 export const ticketService = {
   // Create new ticket
   createTicket: async (ticketData: CreateTicketData): Promise<Ticket> => {
-    const response = await apiRequest.post<Ticket>('/tickets', ticketData);
-    return response.data;
+    return apiRequest.post<Ticket>('/tickets', ticketData);
   },
 
   // Get user's own tickets
   getUserTickets: async (params?: TicketQueryParams): Promise<PaginatedResponse<Ticket>> => {
-    return await apiRequest.getPaginated<Ticket>('/tickets', params);
+    // If you need meta, consider using apiRequestRaw
+    return apiRequest.get<PaginatedResponse<Ticket>>('/tickets');
   },
 
   // Get all tickets (moderator/admin only)
   getAllTickets: async (params?: TicketQueryParams): Promise<PaginatedResponse<Ticket>> => {
-    return await apiRequest.getPaginated<Ticket>('/tickets/all', params);
+    // If you need meta, consider using apiRequestRaw
+    return apiRequest.get<PaginatedResponse<Ticket>>('/tickets/all');
   },
 
   // Get ticket by ID
   getTicketById: async (id: string): Promise<Ticket> => {
-    const response = await apiRequest.get<Ticket>(`/tickets/${id}`);
-    return response.data;
+    return apiRequest.get<Ticket>(`/tickets/${id}`);
   },
 
   // Update ticket (moderator/admin only)
   updateTicket: async (id: string, data: UpdateTicketData): Promise<Ticket> => {
-    const response = await apiRequest.patch<Ticket>(`/tickets/${id}`, data);
-    return response.data;
+    return apiRequest.patch<Ticket>(`/tickets/${id}`, data);
   },
 
   // Delete ticket (moderator/admin only)

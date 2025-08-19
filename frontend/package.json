@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev -p 3536",
     "dev:3536": "next dev -p 3536",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start -p 3536"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
@@ -39,8 +39,6 @@
     "@radix-ui/react-toggle": "1.1.1",
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
-    "@stagewise-plugins/react": "^0.6.0",
-    "@stagewise/toolbar-next": "^0.6.0",
     "@types/js-cookie": "^3.0.6",
     "autoprefixer": "^10.4.20",
     "axios": "^1.10.0",
@@ -63,10 +61,12 @@
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.0",
     "sonner": "^1.7.1",
+    "swr": "^2.3.6",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.6",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@types/node": "^22",

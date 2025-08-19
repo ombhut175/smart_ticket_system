@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from "@/stores/auth-store"
 
 export default function TestAuthPage() {
   const { user, isLoading, isAuthenticated } = useAuth()

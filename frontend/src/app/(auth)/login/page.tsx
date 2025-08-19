@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, Ticket, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react"
-import { useAuth } from "@/contexts/AuthContext"
+import { useAuth } from "@/stores/auth-store"
 import { toast } from "sonner"
 import { APIError } from "@/types"
 

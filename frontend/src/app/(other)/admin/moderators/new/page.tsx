@@ -12,11 +12,12 @@ import { ArrowLeft, ArrowRight, UserPlus, Plus, Trash2, CheckCircle, Shield, Loa
 
 // Add these imports at the top
 import { User } from "@/types";
-import { userService } from "@/services/user.service";
 import { toast } from "sonner";
 import { Header } from "@/components/reusable/header"
 import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { SidebarNav } from "@/components/navigation/sidebar-nav"
+import useSWRMutation from 'swr/mutation'
+import { postFetcher } from '@/lib/swr/fetchers'
 
 const mockAdmin: User = { name: "", email: "", role: "admin", is_active: true, is_email_verified: false, is_profile_completed: false, id: "", created_at: "", updated_at: "" }
 
@@ -92,6 +93,8 @@ export default function PromoteModeratorPage() {
     }
   }
 
+  const { trigger: promoteMod } = useSWRMutation('/users/moderator', postFetcher)
+
   const handleStep2Submit = async () => {
     if (!validateStep2()) return
 
@@ -101,7 +104,7 @@ export default function PromoteModeratorPage() {
         skill_name: s.name.trim(),
         proficiency_level: (s.proficiency.toLowerCase() as any) || "beginner",
       }))
-      await userService.promoteModerator(formData.email, payload)
+      await promoteMod({ email: formData.email, skills: payload })
       setIsSuccess(true)
       toast.success("User promoted to moderator")
     } catch (e: any) {
