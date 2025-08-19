@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { authService } from "@/services/auth.service";
-import { resetRedirectFlag } from "@/lib/api";
+import { resetRedirectFlag } from "@/lib/auth-redirect";
 import type { User, LoginData, SignupData } from "@/types";
 
 interface AuthState {
