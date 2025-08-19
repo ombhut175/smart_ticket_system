@@ -1,7 +1,8 @@
 import axios from "axios";
+import { API_URL_PREFIX } from "@/helpers/string_const";
 
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/${API_URL_PREFIX}`,
   withCredentials: true,
 });
 
@@ -30,7 +31,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Add response interceptor for error handling
+// Add response interceptor for logging while preserving original error shape
 apiClient.interceptors.response.use(
   (response) => {
     console.log("API Response:", {
@@ -41,25 +42,14 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: any) => {
-    // Allow callers to suppress global toast notifications
-    if (error.config?.suppressToast) {
-      return Promise.reject(error);
-    }
-
+    // Log and pass through so downstream interceptors/handlers can decide
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      const errorMessage = error.response.data?.message || "An error occurred";
-      console.error("API Error:", errorMessage, error.response.data);
-      return Promise.reject(new Error(errorMessage));
+      console.error("API Error Response:", error.response.status, error.response.data);
     } else if (error.request) {
-      // The request was made but no response was received
-      console.error("No response received:", error.request);
-      return Promise.reject(new Error("No response received from server"));
+      console.error("API Error No Response:", error.message);
     } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error("Request setup error:", error.message);
-      return Promise.reject(error);
+      console.error("API Error Setup:", error.message);
     }
+    return Promise.reject(error);
   }
-); 
+);

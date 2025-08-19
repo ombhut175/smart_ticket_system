@@ -1,3 +1,5 @@
+export const API_URL_PREFIX = "api";
+
 // HTTP Status Codes
 export const HTTP_STATUS = {
   OK: 200,
@@ -25,3 +27,5 @@ export const API_MESSAGES = {
   INVALID_CREDENTIALS: 'Invalid email or password.',
   SUCCESS: 'Operation completed successfully.',
 } as const;
+
+

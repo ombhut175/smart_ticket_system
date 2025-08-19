@@ -105,7 +105,7 @@ function formatDate(dateString: string | null) {
 }
 
 export default function AdminUsersPage() {
-  const { user: currentUser, loading: authLoading } = useAuth();
+  const { user: currentUser, isLoading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
