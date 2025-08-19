@@ -112,7 +112,7 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<ExtendedUser | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogType, setDialogType] = useState<"role" | "status">("role")
-  const [newRole, setNewRole] = useState<UserRole>("User")
+  const [newRole, setNewRole] = useState<UserRole>("user")
 
   // SWR: fetch users list
   const { data: usersData, isLoading: loading, mutate } = useSWR<ExtendedUser[]>(
@@ -179,9 +179,9 @@ export default function AdminUsersPage() {
   const stats = {
     total: users.length,
     active: users.filter((u) => u.isActive).length,
-    admins: users.filter((u) => u.role === "Admin" || u.role === "admin").length,
-    moderators: users.filter((u) => u.role === "Moderator" || u.role === "moderator").length,
-    users: users.filter((u) => u.role === "User" || u.role === "user").length,
+    admins: users.filter((u) => u.role === "admin").length,
+    moderators: users.filter((u) => u.role === "moderator").length,
+    users: users.filter((u) => u.role === "user").length,
   }
 
   const handleRoleChange = (user: ExtendedUser) => {
@@ -229,7 +229,7 @@ export default function AdminUsersPage() {
       <Header user={currentUser} variant="admin" />
 
       <div className="flex">
-        <SidebarNav userRole={currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)} />
+        <SidebarNav userRole={currentUser.role === 'admin' ? 'Admin' : 'Moderator'} />
 
         <main className="flex-1 overflow-hidden">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -385,7 +385,7 @@ export default function AdminUsersPage() {
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
                                   <AvatarFallback className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                                    {user.name
+                                    {(user.name ?? user.email)
                                       .split(" ")
                                       .map((n) => n[0])
                                       .join("")}
@@ -471,9 +471,9 @@ export default function AdminUsersPage() {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="User">User</SelectItem>
-                    <SelectItem value="Moderator">Moderator</SelectItem>
-                    <SelectItem value="Admin">Admin</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="moderator">Moderator</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

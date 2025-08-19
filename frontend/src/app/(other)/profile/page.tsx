@@ -22,7 +22,7 @@ import type { User } from '@/types'
 import { handleError } from '@/helpers/helpers'
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Ticket, Send, Loader2, CheckCircle, Mail, Phone, MapPin, Calendar, Edit3, Save, X, Camera, Shield, Award, Activity, Clock, AlertCircle, XCircle, User } from "lucide-react"
+import { ArrowLeft, Ticket, Send, Loader2, CheckCircle, Mail, Phone, MapPin, Calendar, Edit3, Save, X, Camera, Shield, Award, Activity, Clock, AlertCircle, XCircle, User as UserIcon } from "lucide-react"
 
 // Mock user data (fallback until real profile loads)
 const mockUser = {
@@ -70,7 +70,7 @@ export default function ProfilePage() {
   const { refreshUser } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({ first_name: "", last_name: "" })
+  const [formData, setFormData] = useState<{ first_name: string; last_name: string; email?: string; phone?: string; location?: string; bio?: string }>({ first_name: "", last_name: "" })
   const [profile, setProfile] = useState({ ...mockUser })
 
   const { data: meResp, isLoading: meLoading } = useSWR<{
@@ -86,10 +86,10 @@ export default function ProfilePage() {
         id: me.id,
         name: `${me.first_name ?? ''} ${me.last_name ?? ''}`.trim() || me.email.split("@")[0],
         email: me.email,
-        role: me.role,
+        role: (me.role as any),
         joinDate: me.created_at,
       }))
-      setFormData({ first_name: me.first_name ?? '', last_name: me.last_name ?? '' })
+      setFormData({ first_name: me.first_name ?? '', last_name: me.last_name ?? '', email: me.email })
     }
   }, [meLoading, meResp])
 
@@ -98,13 +98,13 @@ export default function ProfilePage() {
   const handleSave = async () => {
     try {
       setIsLoading(true)
-      const updated = await updateProfile({ ...formData })
+      const updated = (await updateProfile({ ...formData })) as User
       toast.success("Profile updated")
       setProfile((p) => ({
         ...p,
         name: `${updated.first_name ?? ''} ${updated.last_name ?? ''}`.trim() || updated.email.split("@")[0],
         email: updated.email,
-        role: updated.role,
+        role: (updated.role as any),
       }))
       await refreshUser()
       setIsEditing(false)
@@ -126,7 +126,7 @@ export default function ProfilePage() {
       case "ticket_resolved":
         return <CheckCircle className="h-4 w-4 text-green-500" />
       case "profile_updated":
-        return <User className="h-4 w-4 text-purple-500" />
+        return <UserIcon className="h-4 w-4 text-purple-500" />
       default:
         return <Activity className="h-4 w-4 text-gray-500" />
     }
@@ -248,7 +248,7 @@ export default function ProfilePage() {
                 <EnhancedCard>
                   <div className="p-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center">
-                      <User className="h-5 w-5 mr-2 text-blue-600" />
+                      <UserIcon className="h-5 w-5 mr-2 text-blue-600" />
                       Personal Information
                     </h3>
                     <div className="space-y-4">
@@ -257,11 +257,19 @@ export default function ProfilePage() {
                         {isEditing ? (
                           <EnhancedInput
                             id="name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            value={`${formData.first_name} ${formData.last_name}`.trim()}
+                            onChange={(e) => {
+                              const value = e.target.value
+                              const parts = value.split(' ')
+                              setFormData({
+                                ...formData,
+                                first_name: parts[0] || '',
+                                last_name: parts.slice(1).join(' ') || '',
+                              })
+                            }}
                           />
                         ) : (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{formData.name}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{`${formData.first_name} ${formData.last_name}`.trim()}</p>
                         )}
                       </div>
 
@@ -271,7 +279,7 @@ export default function ProfilePage() {
                           <EnhancedInput
                             id="email"
                             type="email"
-                            value={formData.email}
+                            value={formData.email || ''}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           />
                         ) : (
@@ -287,7 +295,7 @@ export default function ProfilePage() {
                         {isEditing ? (
                           <EnhancedInput
                             id="phone"
-                            value={formData.phone}
+                            value={formData.phone || ''}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           />
                         ) : (
@@ -303,7 +311,7 @@ export default function ProfilePage() {
                         {isEditing ? (
                           <EnhancedInput
                             id="location"
-                            value={formData.location}
+                            value={formData.location || ''}
                             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                           />
                         ) : (
@@ -323,7 +331,7 @@ export default function ProfilePage() {
                     <h3 className="text-lg font-semibold mb-4">About</h3>
                     {isEditing ? (
                       <Textarea
-                        value={formData.bio}
+                        value={formData.bio || ''}
                         onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                         placeholder="Tell us about yourself..."
                         className="min-h-[120px]"

@@ -107,7 +107,22 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 dark:from-gray-950 dark:via-blue-950/10 dark:to-indigo-950/10">
-      <Header user={mockUser} />
+      <Header
+        user={{
+          id: mockUser.id,
+          email: mockUser.email,
+          role: "user",
+          is_active: true,
+          is_email_verified: true,
+          is_profile_completed: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          first_name: mockUser.name.split(" ")[0],
+          last_name: mockUser.name.split(" ").slice(1).join(" "),
+          name: mockUser.name,
+          avatar: mockUser.avatar,
+        }}
+      />
       <BreadcrumbNav />
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

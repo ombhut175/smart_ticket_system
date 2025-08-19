@@ -99,10 +99,18 @@ const mockModerators = [
 ]
 
 const mockUser: User = {
-  name: "Sarah Wilson",
+  id: "mock-id",
   email: "sarah.wilson@company.com",
-  role: "Moderator",
+  role: "moderator",
+  is_active: true,
+  is_email_verified: true,
+  is_profile_completed: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  first_name: "Sarah",
+  last_name: "Wilson",
   avatar: "",
+  name: "Sarah Wilson",
 }
 
 function StatusBadge({ status }: { status: string }) {

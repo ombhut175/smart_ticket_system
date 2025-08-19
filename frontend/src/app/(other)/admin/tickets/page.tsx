@@ -104,7 +104,7 @@ export default function AdminTicketsPage() {
     ticket.assignee?.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const { trigger: deleteTicket } = useSWRMutation<string, any, string, void>(
+  const { trigger: deleteTicket } = useSWRMutation(
     selectedTicket ? `/tickets/${selectedTicket.id}` : null,
     async (url: string) => deleteFetcher(url)
   )
