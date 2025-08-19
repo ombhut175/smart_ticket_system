@@ -9,10 +9,11 @@
 1. [Authentication Module](#authentication-module)
 2. [Users Module](#users-module)
 3. [Tickets Module](#tickets-module)
-4. [Common Data Types](#common-data-types)
-5. [Error Responses](#error-responses)
-6. [Response Format](#response-format)
-7. [Authentication & Headers](#authentication--headers)
+4. [Health Module](#health-module)
+5. [Common Data Types](#common-data-types)
+6. [Error Responses](#error-responses)
+7. [Response Format](#response-format)
+8. [Authentication & Headers](#authentication--headers)
 
 ---
 
@@ -690,7 +691,7 @@ None required.
   page?: number;        // Page number (starts from 1), default: 1
   limit?: number;       // Items per page (1-100), default: 20
   status?: "todo" | "in_progress" | "waiting_for_customer" | "resolved" | "closed" | "cancelled";
-  priority?: "low" | "medium" | "high"; // Note: responses may contain "urgent" priority set by AI; filtering by "urgent" is not currently supported
+  priority?: "low" | "medium" | "high";
   assigned_to?: string; // UUID of assigned user (moderator/admin view only)
 }
 ```
@@ -927,6 +928,89 @@ GET /api/tickets/all?page=1&limit=20&status=in_progress&assigned_to=moderator-uu
 
 ---
 
+## Health Module
+
+**Base Path:** `/api/health`
+
+### 1. Health Check
+
+**Endpoint:** `GET /api/health`  
+**Description:** Returns basic application health information.  
+**Authentication:** None
+
+#### Response (200 OK)
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Application is healthy",
+  "data": {
+    "status": "healthy",
+    "timestamp": "2023-01-01T00:00:00.000Z",
+    "uptime": 123.45,
+    "version": "1.0.0"
+  },
+  "timestamp": "2023-01-01T00:00:00.000Z"
+}
+```
+
+### 2. Database Health
+
+**Endpoint:** `GET /api/health/database`  
+**Description:** Checks database connectivity and basic counts.  
+**Authentication:** None
+
+#### Response (200 OK)
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Database connection is healthy",
+  "data": {
+    "database": {
+      "isConnected": true,
+      "databaseName": "supabase",
+      "version": "1.0.0",
+      "totalUsers": 10,
+      "totalTickets": 25,
+      "totalTestingRecords": 0
+    }
+  },
+  "timestamp": "2023-01-01T00:00:00.000Z"
+}
+```
+
+### 3. Database Stats
+
+**Endpoint:** `GET /api/health/database/stats`  
+**Description:** Returns aggregated database statistics.  
+**Authentication:** None
+
+#### Response (200 OK)
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Database statistics retrieved successfully",
+  "data": {
+    "totalTables": 4,
+    "totalUsers": 10,
+    "totalTickets": 25,
+    "connectionInfo": {
+      "isConnected": true,
+      "databaseName": "supabase",
+      "version": "1.0.0"
+    }
+  },
+  "timestamp": "2023-01-01T00:00:00.000Z"
+}
+```
+
+---
+
 ## Common Data Types
 
 ### User Object
@@ -967,7 +1051,7 @@ interface Ticket {
   title: string;                 // 5-200 characters
   description: string;           // 10-5000 characters
   status: "todo" | "in_progress" | "waiting_for_customer" | "resolved" | "closed" | "cancelled";
-  priority: "low" | "medium" | "high" | "urgent"; // "urgent" can be assigned by AI analysis
+  priority: "low" | "medium" | "high";
   created_by: string;            // UUID of creator
   assigned_to?: string;          // UUID of assigned moderator
   summary?: string;              // AI-generated summary
@@ -1152,7 +1236,7 @@ The system uses HTTP-only cookies for authentication:
 
 ### Protected Endpoints
 
-- **Authentication Required**: All endpoints except auth endpoints
+- **Authentication Required**: All endpoints except auth and health endpoints
 - **Role Restrictions**: Clearly marked in endpoint descriptions
 - **Access Control**: Automatic enforcement via guards
 
@@ -1175,7 +1259,7 @@ When a ticket is created, the system automatically:
 ### Ticket States During Processing
 
 - Initial: `status: "todo"`, `priority: "medium"`
-- After AI: Updated priority, summary, helpful_notes, related_skills
+- After AI: Updated priority (one of low/medium/high), summary, helpful_notes, related_skills
 - After Assignment: `assigned_to` populated if suitable moderator found
 
 ---

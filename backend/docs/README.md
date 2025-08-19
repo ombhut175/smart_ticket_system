@@ -82,6 +82,17 @@ POST /api/auth/logout
 
 *Users can only view their own tickets
 
+### 🩺 Health Module (`/api/health`)
+**Purpose**: System and database health checks  
+**Endpoints**: 3 endpoints  
+**Authentication**: None
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Basic app health info |
+| GET | `/database` | Database connection and counts |
+| GET | `/database/stats` | Aggregated database stats |
+
 ## User Roles & Permissions
 
 ### 👤 User (Default)

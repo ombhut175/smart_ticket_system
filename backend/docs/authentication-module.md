@@ -259,7 +259,7 @@ class LoginDto {
 
 - **Cookie Name**: `supabaseToken`
 - **Security**: HTTP-only flag prevents JavaScript access
-- **SameSite**: Strict (CSRF protection)
+- **SameSite**: Lax (CSRF protection while allowing standard navigations)
 - **Secure**: True in production (HTTPS only)
 - **Expiration**: 7 days (configurable)
 

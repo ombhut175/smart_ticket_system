@@ -133,7 +133,7 @@ interface TicketQueryParams {
   page?: number;        // Page number (starts from 1), default: 1
   limit?: number;       // Items per page (1-100), default: 20
   status?: "todo" | "in_progress" | "waiting_for_customer" | "resolved" | "closed" | "cancelled";
-  priority?: "low" | "medium" | "high"; // Note: API responses may contain "urgent" (set by AI). Filtering by "urgent" is not currently supported.
+  priority?: "low" | "medium" | "high";
   assigned_to?: string; // UUID of assigned user (for moderator/admin views)
 }
 ```
@@ -464,7 +464,7 @@ interface Ticket {
   title: string;                 // 5-200 characters
   description: string;           // 10-5000 characters
   status: "todo" | "in_progress" | "waiting_for_customer" | "resolved" | "closed" | "cancelled";
-  priority: "low" | "medium" | "high" | "urgent"; // "urgent" can be assigned by AI analysis
+  priority: "low" | "medium" | "high";
   created_by: string;            // UUID of creator
   assigned_to?: string;          // UUID of assigned moderator
   summary?: string;              // AI-generated summary
@@ -803,7 +803,7 @@ const updatedTicket = await updateTicket('ticket-uuid-123', {
 
 - **Low**: Minor issues, feature requests, cosmetic problems
 - **Medium**: Standard functionality issues, moderate impact
-- **High**: Critical functionality broken, security issues, urgent problems
+- **High**: Critical functionality broken, security issues, severe problems
 
 ### Status Workflow
 
