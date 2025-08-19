@@ -43,9 +43,10 @@ import { BreadcrumbNav } from "@/components/navigation/breadcrumb-nav"
 import { SidebarNav } from "@/components/navigation/sidebar-nav"
 import { useAuth } from '@/stores/auth-store'
 import useSWR from 'swr'
+import { SWR_KEYS } from '@/constants/swr-keys'
 import useSWRMutation from 'swr/mutation'
 import { patchFetcher } from '@/lib/swr/fetchers'
-import { handleError } from '@/helpers/helpers'
+import { handleError } from '@/helpers/errors'
 
 interface ExtendedUser extends User {
   id: string;
@@ -116,7 +117,7 @@ export default function AdminUsersPage() {
 
   // SWR: fetch users list
   const { data: usersData, isLoading: loading, mutate } = useSWR<ExtendedUser[]>(
-    '/users/all',
+    SWR_KEYS.USERS,
     {
       onError: (err) => handleError(err as any, 'Failed to fetch users'),
       revalidateOnFocus: true,

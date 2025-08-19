@@ -16,7 +16,8 @@ import { toast } from "sonner"
 import { Ticket, TicketQueryParams } from "@/types"
 import { DashboardSkeleton } from "@/components/loading-skeleton"
 import useSWR from 'swr'
-import { handleError } from '@/helpers/helpers'
+import { SWR_KEYS } from '@/constants/swr-keys'
+import { handleError } from '@/helpers/errors'
 
 function StatusBadge({ status }: { status: string }) {
   const getStatusConfig = (status: string) => {
@@ -114,7 +115,7 @@ export default function TicketsPage() {
     data: Ticket[];
     meta: { total: number; page: number; limit: number };
     timestamp: string;
-  }>(user ? query : null, {
+  }>(user ? SWR_KEYS.TICKETS_WITH_PARAMS(query) : null, {
     onError: (err) => {
       console.error('Error loading tickets:', err)
       toast.error('Failed to load tickets')

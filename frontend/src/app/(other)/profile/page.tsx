@@ -16,10 +16,11 @@ import { motion } from "framer-motion"
 import { useAuth } from "@/stores/auth-store"
 import { toast } from "sonner"
 import useSWR from 'swr'
+import { SWR_KEYS } from '@/constants/swr-keys'
 import useSWRMutation from 'swr/mutation'
 import { putFetcher } from '@/lib/swr/fetchers'
 import type { User } from '@/types'
-import { handleError } from '@/helpers/helpers'
+import { handleError } from '@/helpers/errors'
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Ticket, Send, Loader2, CheckCircle, Mail, Phone, MapPin, Calendar, Edit3, Save, X, Camera, Shield, Award, Activity, Clock, AlertCircle, XCircle, User as UserIcon } from "lucide-react"
@@ -75,7 +76,7 @@ export default function ProfilePage() {
 
   const { data: meResp, isLoading: meLoading } = useSWR<{
     success: boolean; statusCode: number; message: string; data: User
-  }>(`/users/me`, { onError: (e) => toast.error(e?.message || 'Failed to load profile') })
+  }>(SWR_KEYS.USERS_WITH_PARAMS('me'), { onError: (e) => toast.error(e?.message || 'Failed to load profile') })
 
   useEffect(() => {
     setIsLoading(meLoading)

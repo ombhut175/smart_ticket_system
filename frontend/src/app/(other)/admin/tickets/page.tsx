@@ -47,6 +47,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/stores/auth-store"
 import { Ticket } from "@/types"
 import useSWR from 'swr'
+import { SWR_KEYS } from '@/constants/swr-keys'
 import useSWRMutation from 'swr/mutation'
 import { deleteFetcher } from '@/lib/swr/fetchers'
 
@@ -83,7 +84,7 @@ export default function AdminTicketsPage() {
     data: Ticket[];
     meta: { total: number; page: number; limit: number };
     timestamp: string;
-  }>(listQuery, {
+  }>(SWR_KEYS.TICKETS_WITH_PARAMS(listQuery), {
     onError: () => toast({ title: 'Error', description: 'Failed to load tickets. Please try again.', variant: 'destructive' }),
     revalidateOnFocus: true,
   })
