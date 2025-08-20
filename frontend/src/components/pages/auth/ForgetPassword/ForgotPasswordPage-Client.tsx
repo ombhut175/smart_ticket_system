@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, ArrowLeft, Mail, Send, Sparkles } from "lucide-react"
+import { ROUTES } from "@/constants"
 
 export default function ForgotPasswordClientPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -85,7 +86,7 @@ export default function ForgotPasswordClientPage() {
                   asChild
                   className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 group"
                 >
-                  <Link href="/login">
+                  <Link href={ROUTES.LOGIN}>
                     <ArrowLeft className="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform duration-200" />
                     Back to Login
                   </Link>
@@ -189,7 +190,7 @@ export default function ForgotPasswordClientPage() {
                 variant="outline"
                 className="w-full h-12 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 group bg-transparent"
               >
-                <Link href="/login">
+                <Link href={ROUTES.LOGIN}>
                   <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
                   Back to Login
                 </Link>

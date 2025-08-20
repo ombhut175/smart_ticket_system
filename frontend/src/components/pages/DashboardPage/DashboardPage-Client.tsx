@@ -22,6 +22,8 @@ import {
   Zap
 } from "lucide-react"
 import Link from "next/link"
+import { TICKET_STATUS, TICKET_PRIORITY } from "@/constants"
+import { ROUTES } from "@/constants"
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
@@ -46,19 +48,19 @@ export default function DashboardPage() {
   }
 
   const recentTickets = [
-    { id: "T-001", title: "Login issue on mobile app", status: "open", priority: "high", createdAt: "2 hours ago" },
-    { id: "T-002", title: "Payment gateway error", status: "pending", priority: "critical", createdAt: "4 hours ago" },
-    { id: "T-003", title: "Feature request: Dark mode", status: "resolved", priority: "low", createdAt: "1 day ago" },
-    { id: "T-004", title: "API rate limiting", status: "open", priority: "medium", createdAt: "1 day ago" }
+    { id: "T-001", title: "Login issue on mobile app", status: TICKET_STATUS.OPEN, priority: TICKET_PRIORITY.HIGH, createdAt: "2 hours ago" },
+    { id: "T-002", title: "Payment gateway error", status: TICKET_STATUS.PENDING, priority: TICKET_PRIORITY.CRITICAL, createdAt: "4 hours ago" },
+    { id: "T-003", title: "Feature request: Dark mode", status: TICKET_STATUS.RESOLVED, priority: TICKET_PRIORITY.LOW, createdAt: "1 day ago" },
+    { id: "T-004", title: "API rate limiting", status: TICKET_STATUS.OPEN, priority: TICKET_PRIORITY.MEDIUM, createdAt: "1 day ago" }
   ]
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "open":
+      case TICKET_STATUS.OPEN:
         return <Badge variant="destructive">Open</Badge>
-      case "pending":
+      case TICKET_STATUS.PENDING:
         return <Badge variant="secondary">Pending</Badge>
-      case "resolved":
+      case TICKET_STATUS.RESOLVED:
         return <Badge variant="default">Resolved</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
@@ -67,13 +69,13 @@ export default function DashboardPage() {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case "critical":
+      case TICKET_PRIORITY.CRITICAL:
         return <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">Critical</Badge>
-      case "high":
+      case TICKET_PRIORITY.HIGH:
         return <Badge variant="destructive" className="bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400">High</Badge>
-      case "medium":
+      case TICKET_PRIORITY.MEDIUM:
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">Medium</Badge>
-      case "low":
+      case TICKET_PRIORITY.LOW:
         return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Low</Badge>
       default:
         return <Badge variant="outline">{priority}</Badge>
@@ -91,7 +93,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-          <Link href="/tickets/new">
+          <Link href={ROUTES.TICKETS.NEW}>
             <Plus className="mr-2 h-4 w-4" />
             New Ticket
           </Link>
@@ -230,7 +232,7 @@ export default function DashboardPage() {
               <CardDescription>Latest support tickets and their status</CardDescription>
             </div>
             <Button variant="outline" asChild>
-              <Link href="/tickets">
+              <Link href={ROUTES.TICKETS.ROOT}>
                 View All
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -273,19 +275,19 @@ export default function DashboardPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-              <Link href="/tickets/new">
+              <Link href={ROUTES.TICKETS.NEW}>
                 <Plus className="h-6 w-6" />
                 Create Ticket
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-              <Link href="/tickets">
+              <Link href={ROUTES.TICKETS.ROOT}>
                 <Ticket className="h-6 w-6" />
                 View Tickets
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-              <Link href="/profile">
+              <Link href={ROUTES.PROFILE}>
                 <Users className="h-6 w-6" />
                 Profile
               </Link>

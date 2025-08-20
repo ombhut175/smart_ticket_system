@@ -26,6 +26,7 @@ import {
   Edit
 } from "lucide-react"
 import Link from "next/link"
+import { ROUTES, USER_ROLES, TICKET_STATUS, TICKET_PRIORITY } from "@/constants"
 
 export default function ModeratorDashboardPage() {
   const [mounted, setMounted] = useState(false)
@@ -35,7 +36,7 @@ export default function ModeratorDashboardPage() {
     setMounted(true)
   }, [])
 
-  if (!mounted || !user || user.role !== "moderator") return null
+  if (!mounted || !user || user.role !== USER_ROLES.MODERATOR) return null
 
   // Mock data - replace with actual API calls
   const stats = {
@@ -53,8 +54,8 @@ export default function ModeratorDashboardPage() {
     {
       id: "T-001",
       title: "Login issue on mobile app",
-      status: "open",
-      priority: "high",
+      status: TICKET_STATUS.OPEN,
+      priority: TICKET_PRIORITY.HIGH,
       requester: "John Doe",
       createdAt: "2024-01-20T10:30:00Z",
       category: "Authentication"
@@ -62,8 +63,8 @@ export default function ModeratorDashboardPage() {
     {
       id: "T-002",
       title: "Payment gateway error",
-      status: "in_progress",
-      priority: "critical",
+      status: TICKET_STATUS.IN_PROGRESS,
+      priority: TICKET_PRIORITY.CRITICAL,
       requester: "Jane Smith",
       createdAt: "2024-01-20T09:15:00Z",
       category: "Payment"
@@ -71,8 +72,8 @@ export default function ModeratorDashboardPage() {
     {
       id: "T-003",
       title: "Feature request: Dark mode",
-      status: "resolved",
-      priority: "low",
+      status: TICKET_STATUS.RESOLVED,
+      priority: TICKET_PRIORITY.LOW,
       requester: "Bob Johnson",
       createdAt: "2024-01-19T14:20:00Z",
       category: "Feature Request"
@@ -80,8 +81,8 @@ export default function ModeratorDashboardPage() {
     {
       id: "T-004",
       title: "API rate limiting",
-      status: "open",
-      priority: "medium",
+      status: TICKET_STATUS.OPEN,
+      priority: TICKET_PRIORITY.MEDIUM,
       requester: "Alice Brown",
       createdAt: "2024-01-19T11:45:00Z",
       category: "API"
@@ -90,11 +91,11 @@ export default function ModeratorDashboardPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "open":
+      case TICKET_STATUS.OPEN:
         return <Badge variant="destructive">Open</Badge>
-      case "in_progress":
+      case TICKET_STATUS.IN_PROGRESS:
         return <Badge variant="default" className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">In Progress</Badge>
-      case "resolved":
+      case TICKET_STATUS.RESOLVED:
         return <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Resolved</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
@@ -103,13 +104,13 @@ export default function ModeratorDashboardPage() {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case "critical":
+      case TICKET_PRIORITY.CRITICAL:
         return <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">Critical</Badge>
-      case "high":
+      case TICKET_PRIORITY.HIGH:
         return <Badge variant="destructive" className="bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400">High</Badge>
-      case "medium":
+      case TICKET_PRIORITY.MEDIUM:
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">Medium</Badge>
-      case "low":
+      case TICKET_PRIORITY.LOW:
         return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Low</Badge>
       default:
         return <Badge variant="outline">{priority}</Badge>
@@ -125,7 +126,7 @@ export default function ModeratorDashboardPage() {
           <p className="text-gray-600 dark:text-gray-400">Welcome back, {user.name || user.email}. Here's your ticket overview.</p>
         </div>
         <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-          <Link href="/tickets">
+          <Link href={ROUTES.TICKETS.ROOT}>
             <Plus className="mr-2 h-4 w-4" />
             View All Tickets
           </Link>
@@ -311,17 +312,17 @@ export default function ModeratorDashboardPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/tickets/${ticket.id}`}>
+                    <Link href={ROUTES.TICKETS.DETAIL(ticket.id)}>
                       <Eye className="h-4 w-4" />
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/tickets/${ticket.id}/edit`}>
+                    <Link href={ROUTES.TICKETS.EDIT(ticket.id)}>
                       <Edit className="h-4 w-4" />
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/tickets/${ticket.id}`}>
+                    <Link href={ROUTES.TICKETS.DETAIL(ticket.id)}>
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -331,7 +332,7 @@ export default function ModeratorDashboardPage() {
           </div>
           <div className="mt-6 text-center">
             <Button variant="outline" asChild>
-              <Link href="/tickets">View All Tickets</Link>
+              <Link href={ROUTES.TICKETS.ROOT}>View All Tickets</Link>
             </Button>
           </div>
         </CardContent>
@@ -349,19 +350,19 @@ export default function ModeratorDashboardPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-              <Link href="/tickets/new">
+              <Link href={ROUTES.TICKETS.NEW}>
                 <Plus className="h-6 w-6" />
                 Create Ticket
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-              <Link href="/tickets">
+              <Link href={ROUTES.TICKETS.ROOT}>
                 <Ticket className="h-6 w-6" />
                 Manage Tickets
               </Link>
             </Button>
             <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-              <Link href="/users">
+              <Link href={ROUTES.USERS}>
                 <Users className="h-6 w-6" />
                 View Users
               </Link>

@@ -26,6 +26,8 @@ import {
   Phone
 } from "lucide-react"
 import Link from "next/link"
+import { USER_ROLES, USER_STATUSES } from "@/constants"
+import { ROUTES } from "@/constants"
 
 export default function AdminUsersPage() {
   const [mounted, setMounted] = useState(false)
@@ -44,7 +46,7 @@ export default function AdminUsersPage() {
     setMounted(true)
   }, [])
 
-  if (!mounted || !user || user.role !== "admin") return null
+  if (!mounted || !user || user.role !== USER_ROLES.ADMIN) return null
 
   // Mock data - replace with actual API calls
   const users = [
@@ -52,8 +54,8 @@ export default function AdminUsersPage() {
       id: "1",
       name: "John Doe",
       email: "john.doe@example.com",
-      role: "user",
-      status: "active",
+      role: USER_ROLES.USER,
+      status: USER_STATUSES.ACTIVE,
       avatar: "/placeholder.svg",
       phone: "+1 (555) 123-4567",
       createdAt: "2024-01-15T10:30:00Z",
@@ -65,8 +67,8 @@ export default function AdminUsersPage() {
       id: "2",
       name: "Jane Smith",
       email: "jane.smith@example.com",
-      role: "moderator",
-      status: "active",
+      role: USER_ROLES.MODERATOR,
+      status: USER_STATUSES.ACTIVE,
       avatar: "/placeholder.svg",
       phone: "+1 (555) 234-5678",
       createdAt: "2024-01-10T11:20:00Z",
@@ -78,8 +80,8 @@ export default function AdminUsersPage() {
       id: "3",
       name: "Bob Johnson",
       email: "bob.johnson@example.com",
-      role: "admin",
-      status: "active",
+      role: USER_ROLES.ADMIN,
+      status: USER_STATUSES.ACTIVE,
       avatar: "/placeholder.svg",
       phone: "+1 (555) 345-6789",
       createdAt: "2024-01-05T08:45:00Z",
@@ -91,8 +93,8 @@ export default function AdminUsersPage() {
       id: "4",
       name: "Alice Brown",
       email: "alice.brown@example.com",
-      role: "user",
-      status: "inactive",
+      role: USER_ROLES.USER,
+      status: USER_STATUSES.INACTIVE,
       avatar: "/placeholder.svg",
       phone: "+1 (555) 456-7890",
       createdAt: "2024-01-12T13:15:00Z",
@@ -104,11 +106,11 @@ export default function AdminUsersPage() {
 
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case "admin":
+      case USER_ROLES.ADMIN:
         return <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">Admin</Badge>
-      case "moderator":
+      case USER_ROLES.MODERATOR:
         return <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">Moderator</Badge>
-      case "user":
+      case USER_ROLES.USER:
         return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">User</Badge>
       default:
         return <Badge variant="outline">{role}</Badge>
@@ -117,11 +119,11 @@ export default function AdminUsersPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "active":
+      case USER_STATUSES.ACTIVE:
         return <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Active</Badge>
-      case "inactive":
+      case USER_STATUSES.INACTIVE:
         return <Badge variant="secondary" className="bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">Inactive</Badge>
-      case "pending":
+      case USER_STATUSES.PENDING:
         return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">Pending</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
@@ -130,11 +132,11 @@ export default function AdminUsersPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "active":
+      case USER_STATUSES.ACTIVE:
         return <CheckCircle className="h-4 w-4 text-green-500" />
-      case "inactive":
+      case USER_STATUSES.INACTIVE:
         return <XCircle className="h-4 w-4 text-red-500" />
-      case "pending":
+      case USER_STATUSES.PENDING:
         return <Clock className="h-4 w-4 text-yellow-500" />
       default:
         return <Clock className="h-4 w-4 text-gray-500" />
@@ -185,7 +187,7 @@ export default function AdminUsersPage() {
           <p className="text-gray-600 dark:text-gray-400">Manage system users and their permissions</p>
         </div>
         <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-          <Link href="/admin/users/new">
+          <Link href={ROUTES.ADMIN.USERS.NEW}>
             <Plus className="mr-2 h-4 w-4" />
             Add User
           </Link>
@@ -219,9 +221,9 @@ export default function AdminUsersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="moderator">Moderator</SelectItem>
-                <SelectItem value="user">User</SelectItem>
+                <SelectItem value={USER_ROLES.ADMIN}>Admin</SelectItem>
+                <SelectItem value={USER_ROLES.MODERATOR}>Moderator</SelectItem>
+                <SelectItem value={USER_ROLES.USER}>User</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
@@ -230,9 +232,9 @@ export default function AdminUsersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value={USER_STATUSES.ACTIVE}>Active</SelectItem>
+                <SelectItem value={USER_STATUSES.INACTIVE}>Inactive</SelectItem>
+                <SelectItem value={USER_STATUSES.PENDING}>Pending</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filters.sortBy} onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}>
@@ -263,7 +265,7 @@ export default function AdminUsersPage() {
                   : "No users have been created yet."}
               </p>
               <Button asChild>
-                <Link href="/admin/users/new">Add Your First User</Link>
+                <Link href={ROUTES.ADMIN.USERS.NEW}>Add Your First User</Link>
               </Button>
             </CardContent>
           </Card>
@@ -311,12 +313,12 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/users/${user.id}`}>
+                      <Link href={ROUTES.ADMIN.USERS.DETAIL(user.id)}>
                         <Eye className="h-4 w-4" />
                       </Link>
                     </Button>
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/users/${user.id}/edit`}>
+                      <Link href={ROUTES.ADMIN.USERS.EDIT(user.id)}>
                         <Edit className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -351,19 +353,19 @@ export default function AdminUsersPage() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {users.filter(u => u.status === "active").length}
+                {users.filter(u => u.status === USER_STATUSES.ACTIVE).length}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Active</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {users.filter(u => u.role === "moderator").length}
+                {users.filter(u => u.role === USER_ROLES.MODERATOR).length}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Moderators</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">
-                {users.filter(u => u.role === "admin").length}
+                {users.filter(u => u.role === USER_ROLES.ADMIN).length}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Admins</div>
             </div>

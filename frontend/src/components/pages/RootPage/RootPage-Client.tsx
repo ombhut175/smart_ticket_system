@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/stores/auth-store"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { ROUTES } from "@/constants"
 
 export default function RootPage() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -13,9 +14,9 @@ export default function RootPage() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        router.push('/dashboard')
+        router.push(ROUTES.DASHBOARD)
       } else {
-        router.push('/login')
+        router.push(ROUTES.LOGIN)
       }
     }
   }, [isAuthenticated, isLoading, router])

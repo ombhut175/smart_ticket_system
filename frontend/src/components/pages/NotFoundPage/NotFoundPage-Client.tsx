@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Home, Search, ArrowLeft, Frown } from "lucide-react"
+import { ROUTES } from "@/constants"
 
 export default function NotFoundPage() {
   const [mounted, setMounted] = useState(false)
@@ -51,7 +52,7 @@ export default function NotFoundPage() {
               asChild
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold px-8 py-3 h-12"
             >
-              <Link href="/">
+              <Link href={ROUTES.ROOT}>
                 <Home className="mr-2 h-5 w-5" />
                 Go Home
               </Link>
@@ -70,7 +71,7 @@ export default function NotFoundPage() {
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Need help? Please{" "}
-              <Link href="/tickets/new" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+              <Link href={ROUTES.TICKETS.NEW} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                 submit a support ticket
               </Link>{" "}
               or contact your system administrator.

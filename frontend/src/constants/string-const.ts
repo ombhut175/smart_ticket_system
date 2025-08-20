@@ -29,3 +29,54 @@ export const API_MESSAGES = {
 } as const;
 
 
+// Auth/User domain constants
+export const USER_ROLES = {
+	ADMIN: 'admin',
+	MODERATOR: 'moderator',
+	USER: 'user',
+	SENIOR_MODERATOR: 'senior_moderator',
+	TEAM_LEAD: 'team_lead',
+} as const;
+
+export const USER_STATUSES = {
+	ACTIVE: 'active',
+	INACTIVE: 'inactive',
+	PENDING: 'pending',
+} as const;
+
+// Tickets domain constants
+export const TICKET_STATUS = {
+	OPEN: 'open',
+	PENDING: 'pending',
+	IN_PROGRESS: 'in_progress',
+	RESOLVED: 'resolved',
+	CLOSED: 'closed',
+} as const;
+
+export const TICKET_PRIORITY = {
+	CRITICAL: 'critical',
+	HIGH: 'high',
+	MEDIUM: 'medium',
+	LOW: 'low',
+} as const;
+
+export const TICKET_CATEGORIES = {
+	TECHNICAL: 'technical',
+	BILLING: 'billing',
+	FEATURE: 'feature',
+	BUG: 'bug',
+	ACCOUNT: 'account',
+	OTHER: 'other',
+} as const;
+
+// Organization/People domain
+export const DEPARTMENTS = {
+	SUPPORT: 'support',
+	TECHNICAL: 'technical',
+	BILLING: 'billing',
+	PRODUCT: 'product',
+	MARKETING: 'marketing',
+	OTHER: 'other',
+} as const;
+
+

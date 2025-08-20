@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { LogOut, ArrowLeft } from 'lucide-react'
 import { useAuth } from "@/stores/auth-store"
 import { toast } from 'sonner'
+import { ROUTES } from "@/constants"
 
 export default function LogoutPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -18,7 +19,7 @@ export default function LogoutPage() {
       setIsLoggingOut(true)
       await logout()
       toast.success('Logged out successfully')
-      router.push('/login')
+      router.push(ROUTES.LOGIN)
     } catch (error) {
       toast.error('Failed to logout. Please try again.')
     } finally {
@@ -33,7 +34,7 @@ export default function LogoutPage() {
   // If user is not authenticated, redirect to login
   useEffect(() => {
     if (!user) {
-      router.push('/login')
+      router.push(ROUTES.LOGIN)
     }
   }, [user, router])
 

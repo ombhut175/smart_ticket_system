@@ -26,6 +26,8 @@ import {
   MessageSquare
 } from "lucide-react"
 import Link from "next/link"
+import { USER_ROLES, TICKET_STATUS, TICKET_PRIORITY, TICKET_CATEGORIES } from "@/constants"
+import { ROUTES } from "@/constants"
 
 export default function AdminTicketsPage() {
   const [mounted, setMounted] = useState(false)
@@ -46,7 +48,7 @@ export default function AdminTicketsPage() {
     setMounted(true)
   }, [])
 
-  if (!mounted || !user || user.role !== "admin") return null
+  if (!mounted || !user || user.role !== USER_ROLES.ADMIN) return null
 
   // Mock data - replace with actual API calls
   const tickets = [
@@ -54,8 +56,8 @@ export default function AdminTicketsPage() {
       id: "T-001",
       title: "Login issue on mobile app",
       description: "Unable to login to the mobile application. Getting error message 'Invalid credentials'.",
-      status: "open",
-      priority: "high",
+      status: TICKET_STATUS.OPEN,
+      priority: TICKET_PRIORITY.HIGH,
       category: "Authentication",
       createdAt: "2024-01-15T10:30:00Z",
       updatedAt: "2024-01-15T14:20:00Z",
@@ -73,8 +75,8 @@ export default function AdminTicketsPage() {
       id: "T-002",
       title: "Payment gateway error",
       description: "Payment processing is failing with error code 500. Users cannot complete transactions.",
-      status: "pending",
-      priority: "critical",
+      status: TICKET_STATUS.PENDING,
+      priority: TICKET_PRIORITY.CRITICAL,
       category: "Payment",
       createdAt: "2024-01-14T15:45:00Z",
       updatedAt: "2024-01-15T09:15:00Z",
@@ -92,8 +94,8 @@ export default function AdminTicketsPage() {
       id: "T-003",
       title: "Feature request: Dark mode",
       description: "Would like to have a dark mode option for better user experience in low-light environments.",
-      status: "resolved",
-      priority: "low",
+      status: TICKET_STATUS.RESOLVED,
+      priority: TICKET_PRIORITY.LOW,
       category: "Feature Request",
       createdAt: "2024-01-10T11:20:00Z",
       updatedAt: "2024-01-12T16:30:00Z",
@@ -111,8 +113,8 @@ export default function AdminTicketsPage() {
       id: "T-004",
       title: "API rate limiting",
       description: "API calls are being rate limited too aggressively. Need to adjust the limits.",
-      status: "in_progress",
-      priority: "medium",
+      status: TICKET_STATUS.IN_PROGRESS,
+      priority: TICKET_PRIORITY.MEDIUM,
       category: "API",
       createdAt: "2024-01-13T08:45:00Z",
       updatedAt: "2024-01-14T12:10:00Z",
@@ -130,15 +132,15 @@ export default function AdminTicketsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "open":
+      case TICKET_STATUS.OPEN:
         return <Badge variant="destructive">Open</Badge>
-      case "pending":
+      case TICKET_STATUS.PENDING:
         return <Badge variant="secondary">Pending</Badge>
-      case "in_progress":
+      case TICKET_STATUS.IN_PROGRESS:
         return <Badge variant="default" className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">In Progress</Badge>
-      case "resolved":
+      case TICKET_STATUS.RESOLVED:
         return <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Resolved</Badge>
-      case "closed":
+      case TICKET_STATUS.CLOSED:
         return <Badge variant="outline">Closed</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
@@ -147,13 +149,13 @@ export default function AdminTicketsPage() {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case "critical":
+      case TICKET_PRIORITY.CRITICAL:
         return <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">Critical</Badge>
-      case "high":
+      case TICKET_PRIORITY.HIGH:
         return <Badge variant="destructive" className="bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400">High</Badge>
-      case "medium":
+      case TICKET_PRIORITY.MEDIUM:
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">Medium</Badge>
-      case "low":
+      case TICKET_PRIORITY.LOW:
         return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">Low</Badge>
       default:
         return <Badge variant="outline">{priority}</Badge>
@@ -162,15 +164,15 @@ export default function AdminTicketsPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "open":
+      case TICKET_STATUS.OPEN:
         return <Circle className="h-4 w-4 text-red-500" />
-      case "pending":
+      case TICKET_STATUS.PENDING:
         return <Clock className="h-4 w-4 text-yellow-500" />
-      case "in_progress":
+      case TICKET_STATUS.IN_PROGRESS:
         return <Clock className="h-4 w-4 text-blue-500" />
-      case "resolved":
+      case TICKET_STATUS.RESOLVED:
         return <CheckCircle className="h-4 w-4 text-green-500" />
-      case "closed":
+      case TICKET_STATUS.CLOSED:
         return <XCircle className="h-4 w-4 text-gray-500" />
       default:
         return <Circle className="h-4 w-4 text-gray-500" />
@@ -252,11 +254,11 @@ export default function AdminTicketsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value={TICKET_STATUS.OPEN}>Open</SelectItem>
+                <SelectItem value={TICKET_STATUS.PENDING}>Pending</SelectItem>
+                <SelectItem value={TICKET_STATUS.IN_PROGRESS}>In Progress</SelectItem>
+                <SelectItem value={TICKET_STATUS.RESOLVED}>Resolved</SelectItem>
+                <SelectItem value={TICKET_STATUS.CLOSED}>Closed</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
@@ -265,10 +267,10 @@ export default function AdminTicketsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value={TICKET_PRIORITY.CRITICAL}>Critical</SelectItem>
+                <SelectItem value={TICKET_PRIORITY.HIGH}>High</SelectItem>
+                <SelectItem value={TICKET_PRIORITY.MEDIUM}>Medium</SelectItem>
+                <SelectItem value={TICKET_PRIORITY.LOW}>Low</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filters.category} onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}>
@@ -277,12 +279,12 @@ export default function AdminTicketsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="technical">Technical Issue</SelectItem>
-                <SelectItem value="billing">Billing & Payment</SelectItem>
-                <SelectItem value="feature">Feature Request</SelectItem>
-                <SelectItem value="bug">Bug Report</SelectItem>
-                <SelectItem value="account">Account & Access</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value={TICKET_CATEGORIES.TECHNICAL}>Technical Issue</SelectItem>
+                <SelectItem value={TICKET_CATEGORIES.BILLING}>Billing & Payment</SelectItem>
+                <SelectItem value={TICKET_CATEGORIES.FEATURE}>Feature Request</SelectItem>
+                <SelectItem value={TICKET_CATEGORIES.BUG}>Bug Report</SelectItem>
+                <SelectItem value={TICKET_CATEGORIES.ACCOUNT}>Account & Access</SelectItem>
+                <SelectItem value={TICKET_CATEGORIES.OTHER}>Other</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filters.assignedTo} onValueChange={(value) => setFilters(prev => ({ ...prev, assignedTo: value }))}>
@@ -394,12 +396,12 @@ export default function AdminTicketsPage() {
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/tickets/${ticket.id}`}>
+                      <Link href={ROUTES.ADMIN.TICKETS.DETAIL(ticket.id)}>
                         <Eye className="h-4 w-4" />
                       </Link>
                     </Button>
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/tickets/${ticket.id}/edit`}>
+                      <Link href={ROUTES.ADMIN.TICKETS.EDIT(ticket.id)}>
                         <Edit className="h-4 w-4" />
                       </Link>
                     </Button>

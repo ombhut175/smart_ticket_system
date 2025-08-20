@@ -14,6 +14,7 @@ import { Loader2, Ticket, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react
 import { useAuth } from "@/stores/auth-store"
 import { toast } from "sonner"
 import { APIError } from "@/types"
+import { ROUTES } from "@/constants"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -34,7 +35,7 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard')
+      router.push(ROUTES.DASHBOARD)
     }
   }, [isAuthenticated, router])
 
@@ -45,7 +46,7 @@ export default function LoginPage() {
     try {
       await login(formData)
       toast.success('Login successful!')
-      router.push('/dashboard')
+      router.push(ROUTES.DASHBOARD)
     } catch (error) {
       const apiError = error as APIError
       toast.error(apiError.message || 'Login failed')
@@ -208,7 +209,7 @@ export default function LoginPage() {
               <div className="space-y-4">
                 <div className="text-center">
                   <Link
-                    href="/forgot-password"
+                    href={ROUTES.FORGOT_PASSWORD}
                     className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors duration-200 font-medium"
                   >
                     Forgot your password?
@@ -231,7 +232,7 @@ export default function LoginPage() {
                   variant="outline"
                   className="w-full h-12 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 group bg-transparent"
                 >
-                  <Link href="/signup">
+                  <Link href={ROUTES.SIGNUP}>
                     Create Account
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                   </Link>

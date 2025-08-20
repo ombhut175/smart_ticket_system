@@ -22,6 +22,7 @@ import {
   Calendar
 } from "lucide-react"
 import Link from "next/link"
+import { ROUTES, USER_ROLES, DEPARTMENTS } from "@/constants"
 
 export default function AdminModeratorsNewPage() {
   const [mounted, setMounted] = useState(false)
@@ -35,7 +36,7 @@ export default function AdminModeratorsNewPage() {
     email: "",
     phone: "",
     department: "",
-    role: "moderator",
+    role: USER_ROLES.MODERATOR,
     permissions: {
       viewTickets: true,
       editTickets: true,
@@ -53,7 +54,7 @@ export default function AdminModeratorsNewPage() {
     setMounted(true)
   }, [])
 
-  if (!mounted || !user || user.role !== "admin") return null
+  if (!mounted || !user || user.role !== USER_ROLES.ADMIN) return null
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -93,7 +94,7 @@ export default function AdminModeratorsNewPage() {
       await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate API call
       
       toast.success("Moderator created successfully!")
-      router.push("/admin/users")
+      router.push(ROUTES.ADMIN.USERS.ROOT)
     } catch (error) {
       toast.error("Failed to create moderator. Please try again.")
     } finally {
@@ -181,7 +182,7 @@ export default function AdminModeratorsNewPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" asChild>
-          <Link href="/admin/users">
+          <Link href={ROUTES.ADMIN.USERS.ROOT}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Users
           </Link>
@@ -273,12 +274,12 @@ export default function AdminModeratorsNewPage() {
                           <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="support">Support</SelectItem>
-                          <SelectItem value="technical">Technical</SelectItem>
-                          <SelectItem value="billing">Billing</SelectItem>
-                          <SelectItem value="product">Product</SelectItem>
-                          <SelectItem value="marketing">Marketing</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value={DEPARTMENTS.SUPPORT}>Support</SelectItem>
+                          <SelectItem value={DEPARTMENTS.TECHNICAL}>Technical</SelectItem>
+                          <SelectItem value={DEPARTMENTS.BILLING}>Billing</SelectItem>
+                          <SelectItem value={DEPARTMENTS.PRODUCT}>Product</SelectItem>
+                          <SelectItem value={DEPARTMENTS.MARKETING}>Marketing</SelectItem>
+                          <SelectItem value={DEPARTMENTS.OTHER}>Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -289,9 +290,9 @@ export default function AdminModeratorsNewPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="moderator">Moderator</SelectItem>
-                          <SelectItem value="senior_moderator">Senior Moderator</SelectItem>
-                          <SelectItem value="team_lead">Team Lead</SelectItem>
+                          <SelectItem value={USER_ROLES.MODERATOR}>Moderator</SelectItem>
+                          <SelectItem value={USER_ROLES.SENIOR_MODERATOR}>Senior Moderator</SelectItem>
+                          <SelectItem value={USER_ROLES.TEAM_LEAD}>Team Lead</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -393,13 +394,13 @@ export default function AdminModeratorsNewPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="outline" size="sm" className="w-full justify-start" asChild>
-                <Link href="/admin/users">
+                <Link href={ROUTES.ADMIN.USERS.ROOT}>
                   <UserPlus className="mr-2 h-4 w-4" />
                   View All Users
                 </Link>
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" asChild>
-                <Link href="/admin/tickets">
+                <Link href={ROUTES.ADMIN.TICKETS.ROOT}>
                   <Shield className="mr-2 h-4 w-4" />
                   Manage Tickets
                 </Link>

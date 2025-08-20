@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/stores/auth-store"
 import { toast } from "sonner"
 import { LogOut, User, Shield, Calendar, Mail, Phone, MapPin, Building, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react"
+import { ROUTES, USER_ROLES, USER_STATUSES } from "@/constants"
 
 export default function TestAuthPage() {
   const [mounted, setMounted] = useState(false)
@@ -40,7 +41,7 @@ export default function TestAuthPage() {
           </CardHeader>
           <CardContent className="text-center">
             <Button asChild className="w-full">
-              <a href="/login">Go to Login</a>
+              <a href={ROUTES.LOGIN}>Go to Login</a>
             </Button>
           </CardContent>
         </Card>
@@ -50,11 +51,11 @@ export default function TestAuthPage() {
 
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case "admin":
+      case USER_ROLES.ADMIN:
         return <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">Admin</Badge>
-      case "moderator":
+      case USER_ROLES.MODERATOR:
         return <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">Moderator</Badge>
-      case "user":
+      case USER_ROLES.USER:
         return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">User</Badge>
       default:
         return <Badge variant="outline">{role}</Badge>
@@ -63,11 +64,11 @@ export default function TestAuthPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "active":
+      case USER_STATUSES.ACTIVE:
         return <CheckCircle className="h-4 w-4 text-green-500" />
-      case "inactive":
+      case USER_STATUSES.INACTIVE:
         return <XCircle className="h-4 w-4 text-red-500" />
-      case "pending":
+      case USER_STATUSES.PENDING:
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />
       default:
         return <AlertTriangle className="h-4 w-4 text-gray-500" />

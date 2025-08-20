@@ -21,6 +21,7 @@ import {
   CheckCircle
 } from "lucide-react"
 import Link from "next/link"
+import { ROUTES, TICKET_PRIORITY, TICKET_CATEGORIES } from "@/constants"
 
 export default function NewTicketPage() {
   const [mounted, setMounted] = useState(false)
@@ -32,7 +33,7 @@ export default function NewTicketPage() {
     title: "",
     description: "",
     category: "",
-    priority: "medium",
+    priority: TICKET_PRIORITY.MEDIUM,
     attachments: [] as File[]
   })
 
@@ -87,7 +88,7 @@ export default function NewTicketPage() {
       await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate API call
       
       toast.success("Ticket created successfully!")
-      router.push("/tickets")
+      router.push(ROUTES.TICKETS.ROOT)
     } catch (error) {
       toast.error("Failed to create ticket. Please try again.")
     } finally {
@@ -97,13 +98,13 @@ export default function NewTicketPage() {
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case "critical":
+      case TICKET_PRIORITY.CRITICAL:
         return <AlertCircle className="h-4 w-4 text-red-500" />
-      case "high":
+      case TICKET_PRIORITY.HIGH:
         return <AlertCircle className="h-4 w-4 text-orange-500" />
-      case "medium":
+      case TICKET_PRIORITY.MEDIUM:
         return <Clock className="h-4 w-4 text-yellow-500" />
-      case "low":
+      case TICKET_PRIORITY.LOW:
         return <Circle className="h-4 w-4 text-green-500" />
       default:
         return <Circle className="h-4 w-4 text-gray-500" />
@@ -112,13 +113,13 @@ export default function NewTicketPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "critical":
+      case TICKET_PRIORITY.CRITICAL:
         return "text-red-600 dark:text-red-400"
-      case "high":
+      case TICKET_PRIORITY.HIGH:
         return "text-orange-600 dark:text-orange-400"
-      case "medium":
+      case TICKET_PRIORITY.MEDIUM:
         return "text-yellow-600 dark:text-yellow-400"
-      case "low":
+      case TICKET_PRIORITY.LOW:
         return "text-green-600 dark:text-green-400"
       default:
         return "text-gray-600 dark:text-gray-400"
@@ -130,7 +131,7 @@ export default function NewTicketPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" asChild>
-          <Link href="/tickets">
+          <Link href={ROUTES.TICKETS.ROOT}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Tickets
           </Link>
@@ -177,12 +178,12 @@ export default function NewTicketPage() {
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="technical">Technical Issue</SelectItem>
-                        <SelectItem value="billing">Billing & Payment</SelectItem>
-                        <SelectItem value="feature">Feature Request</SelectItem>
-                        <SelectItem value="bug">Bug Report</SelectItem>
-                        <SelectItem value="account">Account & Access</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value={TICKET_CATEGORIES.TECHNICAL}>Technical Issue</SelectItem>
+                        <SelectItem value={TICKET_CATEGORIES.BILLING}>Billing & Payment</SelectItem>
+                        <SelectItem value={TICKET_CATEGORIES.FEATURE}>Feature Request</SelectItem>
+                        <SelectItem value={TICKET_CATEGORIES.BUG}>Bug Report</SelectItem>
+                        <SelectItem value={TICKET_CATEGORIES.ACCOUNT}>Account & Access</SelectItem>
+                        <SelectItem value={TICKET_CATEGORIES.OTHER}>Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -194,10 +195,10 @@ export default function NewTicketPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
+                        <SelectItem value={TICKET_PRIORITY.LOW}>Low</SelectItem>
+                        <SelectItem value={TICKET_PRIORITY.MEDIUM}>Medium</SelectItem>
+                        <SelectItem value={TICKET_PRIORITY.HIGH}>High</SelectItem>
+                        <SelectItem value={TICKET_PRIORITY.CRITICAL}>Critical</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -304,10 +305,10 @@ export default function NewTicketPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                { level: "Critical", description: "System down, data loss, security breach", icon: "critical" },
-                { level: "High", description: "Major functionality broken, work blocked", icon: "high" },
-                { level: "Medium", description: "Minor issues, workaround available", icon: "medium" },
-                { level: "Low", description: "Cosmetic issues, feature requests", icon: "low" }
+                { level: "Critical", description: "System down, data loss, security breach", icon: TICKET_PRIORITY.CRITICAL },
+                { level: "High", description: "Major functionality broken, work blocked", icon: TICKET_PRIORITY.HIGH },
+                { level: "Medium", description: "Minor issues, workaround available", icon: TICKET_PRIORITY.MEDIUM },
+                { level: "Low", description: "Cosmetic issues, feature requests", icon: TICKET_PRIORITY.LOW }
               ].map((priority) => (
                 <div key={priority.level} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <div className={`mt-1 ${getPriorityColor(priority.icon)}`}>

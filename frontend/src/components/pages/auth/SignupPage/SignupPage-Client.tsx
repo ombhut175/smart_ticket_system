@@ -13,6 +13,7 @@ import { Loader2, Ticket, Eye, EyeOff, CheckCircle, Mail, ArrowRight, Sparkles, 
 import { useAuth } from "@/stores/auth-store"
 import { toast } from "sonner"
 import { APIError } from "@/types"
+import { ROUTES } from "@/constants"
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -36,7 +37,7 @@ export default function SignupPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard')
+      router.push(ROUTES.DASHBOARD)
     }
   }, [isAuthenticated, router])
 
@@ -111,7 +112,7 @@ export default function SignupPage() {
                 asChild
                 className="w-full h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
               >
-                <Link href="/login">
+                <Link href={ROUTES.LOGIN}>
                   Continue to Login
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
                 </Link>
@@ -314,7 +315,7 @@ export default function SignupPage() {
                   variant="outline"
                   className="w-full h-12 border-2 border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-200 group bg-transparent"
                 >
-                  <Link href="/login">
+                  <Link href={ROUTES.LOGIN}>
                     Sign In
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                   </Link>
