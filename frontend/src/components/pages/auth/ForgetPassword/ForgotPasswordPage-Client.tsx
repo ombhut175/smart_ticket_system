@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Loader2, ArrowLeft, Mail, Send, Sparkles } from "lucide-react"
 
-export default function ForgotPasswordPage() {
+export default function ForgotPasswordClientPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [email, setEmail] = useState("")
