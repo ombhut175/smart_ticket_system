@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import { HTTP_STATUS, API_MESSAGES } from '@/helpers/string_const';
+import { HTTP_STATUS, API_MESSAGES } from '@/constants/string-const';
 import { apiClient } from '@/lib/api/apiClient';
 
 // Response interceptor for global error handling

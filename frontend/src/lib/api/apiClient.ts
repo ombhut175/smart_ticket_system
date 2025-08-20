@@ -1,8 +1,9 @@
 import axios from "axios";
-import { API_URL_PREFIX } from "@/helpers/string_const";
+import { API_URL_PREFIX } from "@/constants/string-const";
+import { getApiBaseURL } from "@/lib/config/env";
 
 export const apiClient = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/${API_URL_PREFIX}`,
+  baseURL: getApiBaseURL(API_URL_PREFIX),
   withCredentials: true,
 });
 

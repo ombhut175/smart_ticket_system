@@ -14,6 +14,22 @@ export interface User {
   updated_at: string;
   avatar?: string;
   name?: string;
+  // Additional properties used in components
+  phone?: string;
+  country?: string;
+  city?: string;
+  bio?: string;
+  status?: string;
+  totalTickets?: number;
+  resolvedTickets?: number;
+  username?: string;
+  alternativeEmail?: string;
+  emailVerifiedAt?: string;
+  // Backward compatibility properties
+  createdAt?: string;
+  updatedAt?: string;
+  lastLoginAt?: string;
+  emailVerified?: boolean;
 }
 
 export interface UserSkill {

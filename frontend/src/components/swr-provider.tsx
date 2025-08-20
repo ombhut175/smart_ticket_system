@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { SWRConfig } from 'swr'
-import { handleError } from '@/helpers/helpers'
+import { handleError } from '@/helpers/errors'
 import { fetcher } from '@/lib/swr/fetchers'
 
 export function SWRProvider({ children }: { children: React.ReactNode }) {
